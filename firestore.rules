@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin()  { return signedIn() && request.auth.token.admin == true; }
+    // public host doc holds only approximate location; exact address lives in /private
+    match /hosts/{id} {
+      allow read: if resource.data.status == 'verified' || isAdmin()
+                  || (signedIn() && resource.data.ownerUid == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid
+                    && request.resource.data.status == 'pending';
+      allow update: if isAdmin();   // only admins can verify/suspend
+      match /private/{doc} {
+        allow read: if isAdmin() || (signedIn() && get(/databases/$(db)/documents/hosts/$(id)).data.ownerUid == request.auth.uid);
+        allow write: if signedIn() && get(/databases/$(db)/documents/hosts/$(id)).data.ownerUid == request.auth.uid;
+      }
+    }
+    match /bookings/{id} {
+      allow read: if signedIn() && (resource.data.driverUid == request.auth.uid
+                  || resource.data.hostUid == request.auth.uid) || isAdmin();
+      allow write: if false;        // bookings are created by the backend only
+    }
+    match /users/{uid}/vehicles/{vid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+    match /reviews/{id} { allow read: if true; allow write: if false; }
+  }
+}

@@ -1,0 +1,133 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>ChargeNear</title>
+<style>
+:root{--g:#0b8f5a;--bg:#f5f7f6;--t:#17211c}*{box-sizing:border-box}
+body{margin:0;font:15px system-ui,sans-serif;background:var(--bg);color:var(--t)}
+header{background:var(--g);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+nav{display:flex;gap:6px;padding:8px;background:#fff;position:sticky;top:0;z-index:5}nav button{flex:1}
+main{max-width:720px;margin:auto;padding:12px}
+.card{background:#fff;border-radius:12px;padding:14px;margin:10px 0;box-shadow:0 1px 3px #0002}
+button{background:var(--g);color:#fff;border:0;border-radius:8px;padding:10px 14px;font-size:15px;cursor:pointer}
+button.alt{background:#e3ece7;color:var(--t)}
+input,select{width:100%;padding:10px;margin:4px 0 10px;border:1px solid #bcc;border-radius:8px;font-size:15px}
+#map{height:300px;border-radius:12px;background:#dde}.hide{display:none}
+.row{display:flex;gap:8px}.row>*{flex:1}label.c{display:inline-block;margin-right:12px}label.c input{width:auto;margin:0 4px 0 0}
+</style></head><body>
+<header><b>⚡ ChargeNear</b><button class="alt hide" id="btnOut">Sign out</button></header>
+<main>
+<div id="login" class="card"><h3>Emergency EV charging, near you</h3>
+<button id="btnLogin">Sign in with Google</button></div>
+<div id="app" class="hide">
+<nav><button data-t="find">Find charger</button><button data-t="vehicles" class="alt">My vehicles</button><button data-t="host" class="alt">Become a host</button></nav>
+
+<section id="t_find"><div class="card">
+<label>Vehicle</label><select id="fv"></select>
+<label>Battery left: <b id="socv">10</b>%</label><input id="soc" type="range" min="1" max="100" value="10">
+<label class="c"><input type="checkbox" id="ac">AC on</label>
+<input id="dest" type="number" min="0" placeholder="Distance to destination in km (optional)">
+<button id="btnFind">Find chargers I can reach</button></div>
+<div id="map"></div><p id="range"></p><div id="res"></div></section>
+
+<section id="t_vehicles" class="hide"><div class="card"><h3>Add vehicle</h3>
+<input id="nick" placeholder="Nickname (e.g. My Nexon)" maxlength="40">
+<select id="cat"></select><select id="vtype"><option>2W</option><option>3W</option><option selected>4W</option></select>
+<div class="row"><input id="kwh" type="number" step="0.1" placeholder="Battery kWh"><input id="whkm" type="number" placeholder="Wh per km"><input id="hp" type="number" value="100" placeholder="Battery health %"></div>
+<div id="vcn"><label class="c"><input type="checkbox" class="cn" value="socket15A">15A socket</label><label class="c"><input type="checkbox" class="cn" value="type2">Type 2</label><label class="c"><input type="checkbox" class="cn" value="ccs2">CCS2</label></div><br>
+<button id="saveV">Save vehicle</button></div><div id="vlist"></div></section>
+
+<section id="t_host" class="hide"><div class="card"><h3>Register your charging point</h3>
+<p>Your listing is reviewed and verified by our team before it goes live.</p>
+<input id="hname" placeholder="Place name" maxlength="60"><input id="haddr" placeholder="Full address (shown only after a confirmed booking)">
+<div class="row"><input id="hkw" type="number" step="0.1" placeholder="Charger kW (e.g. 3.3)"><input id="hprice" type="number" placeholder="₹ per kWh"></div>
+<div><label class="c"><input type="checkbox" class="hn" value="socket15A">15A socket</label><label class="c"><input type="checkbox" class="hn" value="type2">Type 2</label><label class="c"><input type="checkbox" class="hn" value="ccs2">CCS2</label></div><br>
+<input id="hamen" placeholder="Amenities, comma separated (seating, tea, restroom)">
+<button class="alt" id="hloc">Use my current location</button> <span id="hlocv"></span><br><br>
+<label class="c"><input type="checkbox" id="hsafe">I confirm earthing, MCB/RCCB and a weatherproof socket are in place, and I accept the host agreement.</label><br><br>
+<button id="saveH">Submit for verification</button></div></section>
+</div></main>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getFirestore,collection,addDoc,setDoc,doc,getDocs,deleteDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ====== FILL THESE IN ======
+const CONFIG={apiKey:"AIzaSyBYlSCay4cs10KQLTdMQeLdv-WAKCff5oI",authDomain:"nearby-7702b.firebaseapp.com",databaseURL:"https://nearby-7702b-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"nearby-7702b",storageBucket:"nearby-7702b.firebasestorage.app",messagingSenderId:"1035497772695",appId:"1:1035497772695:web:8431bac77ee4a2ae843bd2",measurementId:"G-3FFY8Z3KXH"};
+const BACKEND="http://localhost:8000";
+const MAPS_KEY="AIzaSyARrrfdGCrfz3flqd8-4qqHmfTs1uyPfeU";
+// Sample values: verify against manufacturer specs and disclose as assumptions.
+const CATALOG=[
+ {n:"Tata Nexon EV",t:"4W",kwh:30.2,wh:150,c:["ccs2","type2"]},{n:"Tata Tiago EV",t:"4W",kwh:24,wh:120,c:["ccs2","type2"]},
+ {n:"MG ZS EV",t:"4W",kwh:50.3,wh:165,c:["ccs2","type2"]},{n:"Ather 450X",t:"2W",kwh:3.7,wh:30,c:["socket15A"]},
+ {n:"Ola S1 Pro",t:"2W",kwh:4,wh:33,c:["socket15A"]},{n:"Bajaj Chetak",t:"2W",kwh:3,wh:30,c:["socket15A"]}];
+
+const $=id=>document.getElementById(id), app=initializeApp(CONFIG), auth=getAuth(app), db=getFirestore(app);
+const el=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!=null)e.textContent=txt;if(cls)e.className=cls;return e};
+const ticked=c=>[...document.querySelectorAll("."+c+":checked")].map(x=>x.value);
+let map,markers=[],hostPos=null;
+const show=t=>["find","vehicles","host"].forEach(x=>$("t_"+x).classList.toggle("hide",x!==t));
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>show(b.dataset.t));
+$("soc").oninput=()=>$("socv").textContent=$("soc").value;
+$("btnLogin").onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()); $("btnOut").onclick=()=>signOut(auth);
+onAuthStateChanged(auth,async u=>{$("login").classList.toggle("hide",!!u);$("app").classList.toggle("hide",!u);$("btnOut").classList.toggle("hide",!u);if(u){await loadVehicles();show("find")}});
+
+// ---- vehicles ----
+CATALOG.forEach((c,i)=>$("cat").add(new Option(c.n,i)));$("cat").add(new Option("Other / custom","x"));
+function fillCat(){const c=CATALOG[$("cat").value];if(!c)return;$("vtype").value=c.t;$("kwh").value=c.kwh;$("whkm").value=c.wh;
+ document.querySelectorAll(".cn").forEach(x=>x.checked=c.c.includes(x.value))}
+$("cat").onchange=fillCat;fillCat();
+$("saveV").onclick=async()=>{
+ const kwh=+$("kwh").value,wh=+$("whkm").value,hp=+$("hp").value,cn=ticked("cn");
+ if(!(kwh>0&&wh>0&&hp>0&&hp<=100&&cn.length))return alert("Fill battery kWh, Wh/km, health (1-100) and pick a connector");
+ const c=CATALOG[$("cat").value];
+ await addDoc(collection(db,"users",auth.currentUser.uid,"vehicles"),{nickname:$("nick").value.trim()||(c?c.n:"My EV"),
+  model:c?c.n:"Custom",type:$("vtype").value,batteryKwh:kwh,whPerKm:wh,healthPct:hp,connectors:cn,createdAt:serverTimestamp()});
+ $("nick").value="";await loadVehicles()};
+async function loadVehicles(){
+ const snap=await getDocs(collection(db,"users",auth.currentUser.uid,"vehicles"));
+ $("fv").replaceChildren();$("vlist").replaceChildren();
+ snap.forEach(d=>{const v=d.data();$("fv").add(new Option(v.nickname,d.id));
+  const c=el("div",null,"card");c.append(el("b",v.nickname),el("div",`${v.model} · ${v.type} · ${v.batteryKwh} kWh · ${v.whPerKm} Wh/km · ${v.connectors.join(", ")}`));
+  const b=el("button","Remove","alt");b.onclick=async()=>{await deleteDoc(doc(db,"users",auth.currentUser.uid,"vehicles",d.id));loadVehicles()};c.append(b);$("vlist").append(c)});
+ if(snap.empty)$("vlist").append(el("p","No vehicles yet. Add one to use the finder."))}
+
+// ---- find chargers ----
+window.initMap=()=>{map=new google.maps.Map($("map"),{center:{lat:18.6298,lng:73.7997},zoom:12})};
+const ms=document.createElement("script");ms.src=`https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&callback=initMap`;document.head.append(ms);
+$("btnFind").onclick=async()=>{
+ if(!$("fv").value)return alert("Add a vehicle first");
+ $("btnFind").disabled=true;$("range").textContent="Finding chargers you can safely reach...";
+ try{
+  const p=await new Promise((ok,no)=>navigator.geolocation.getCurrentPosition(x=>ok(x.coords),no,{enableHighAccuracy:true,timeout:10000}));
+  const token=await auth.currentUser.getIdToken();
+  const r=await fetch(BACKEND+"/recommend",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},
+   body:JSON.stringify({lat:p.latitude,lng:p.longitude,soc:+$("soc").value,vehicleId:$("fv").value,ac_on:$("ac").checked,dest_km:$("dest").value?+$("dest").value:null})});
+  if(!r.ok)throw new Error("Server error "+r.status);
+  render(await r.json(),p);
+ }catch(e){$("range").textContent="Could not complete the search: "+e.message}
+ $("btnFind").disabled=false};
+function render(d,p){
+ $("range").textContent=`Safe range ${d.rangeKm.safe} km (likely ${d.rangeKm.low} to ${d.rangeKm.high} km)`;
+ const L=$("res");L.replaceChildren();markers.forEach(m=>m.setMap(null));markers=[];
+ if(map){map.setCenter({lat:p.latitude,lng:p.longitude});markers.push(new google.maps.Marker({map,position:{lat:p.latitude,lng:p.longitude},title:"You"}))}
+ if(!d.hosts.length){L.append(el("div",d.fallback,"card"));return}
+ d.hosts.forEach((h,i)=>{
+  if(map)markers.push(new google.maps.Marker({map,position:{lat:h.approxLat,lng:h.approxLng},label:String(i+1),title:h.name}));
+  const c=el("div",null,"card");c.append(el("b",`${i+1}. ${h.name}`),
+   el("div",`${h.distKm} km away · ${h.kw} kW · rating ${h.rating} · match ${Math.round(h.score*100)}%`));
+  if(h.minutesNeeded!=null)c.append(el("div",`Charge about ${h.minutesNeeded} min to reach your destination`));
+  const a=el("a","Navigate");a.href=`https://www.google.com/maps/dir/?api=1&destination=${h.approxLat},${h.approxLng}`;a.target="_blank";a.rel="noopener";
+  c.append(a);L.append(c)})}
+
+// ---- host registration ----
+$("hloc").onclick=()=>navigator.geolocation.getCurrentPosition(x=>{hostPos=x.coords;$("hlocv").textContent="Location captured"},()=>alert("Location permission needed"));
+$("saveH").onclick=async()=>{
+ const kw=+$("hkw").value,cn=ticked("hn"),name=$("hname").value.trim();
+ if(!name||!$("haddr").value.trim()||!(kw>0)||!cn.length||!hostPos)return alert("Fill every field and capture your location");
+ if(!$("hsafe").checked)return alert("Please confirm the safety declaration");
+ const ref=await addDoc(collection(db,"hosts"),{ownerUid:auth.currentUser.uid,name,
+  lat:+hostPos.latitude.toFixed(3),lng:+hostPos.longitude.toFixed(3),kw,pricePerKwh:+$("hprice").value||0,connectors:cn,
+  amenities:$("hamen").value.split(",").map(s=>s.trim()).filter(Boolean).slice(0,8),available:true,status:"pending",trust_rating:3,createdAt:serverTimestamp()});
+ await setDoc(doc(db,"hosts",ref.id,"private","address"),{address:$("haddr").value.trim()});
+ alert("Submitted. Our team will verify your listing before it goes live.")};
+</script></body></html>
