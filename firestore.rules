@@ -3,13 +3,22 @@ service cloud.firestore {
   match /databases/{db}/documents {
     function signedIn() { return request.auth != null; }
     function isAdmin()  { return signedIn() && request.auth.token.admin == true; }
+
+    // user profile (stores role selection: 'ev' or 'host')
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
     // public host doc holds only approximate location; exact address lives in /private
     match /hosts/{id} {
       allow read: if resource.data.status == 'verified' || isAdmin()
                   || (signedIn() && resource.data.ownerUid == request.auth.uid);
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid
                     && request.resource.data.status == 'pending';
-      allow update: if isAdmin();   // only admins can verify/suspend
+      allow update: if isAdmin()
+                    || (signedIn() && resource.data.ownerUid == request.auth.uid
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['available']));
+      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
       match /private/{doc} {
         allow read: if isAdmin() || (signedIn() && get(/databases/$(db)/documents/hosts/$(id)).data.ownerUid == request.auth.uid);
         allow write: if signedIn() && get(/databases/$(db)/documents/hosts/$(id)).data.ownerUid == request.auth.uid;
