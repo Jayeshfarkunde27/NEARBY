@@ -300,6 +300,108 @@ input[type="range"]::-webkit-slider-thumb {
   transition: all 0.25s;
 }
 .switch-role-btn button:hover { border-color: var(--g1); color: var(--g2); }
+
+/* ── VERIFICATION DOCS ── */
+.verify-section {
+  border: 1px solid rgba(14,166,91,0.2);
+  border-radius: var(--radius);
+  background: rgba(14,166,91,0.03);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.verify-section .verify-title {
+  font-size: 0.95rem; font-weight: 700; color: var(--g2);
+  display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+}
+.verify-section .verify-subtitle {
+  font-size: 0.8rem; color: var(--t3); margin-bottom: 16px; line-height: 1.5;
+}
+.owner-type-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px;
+}
+@media (max-width: 480px) { .owner-type-grid { grid-template-columns: 1fr; } }
+.owner-type-btn {
+  padding: 10px 6px; border: 1px solid var(--glass-border);
+  border-radius: 10px; background: var(--glass);
+  color: var(--t2); font: 500 0.82rem 'Inter', sans-serif;
+  cursor: pointer; transition: all 0.25s; text-align: center;
+}
+.owner-type-btn:hover { border-color: var(--g1); color: var(--g2); }
+.owner-type-btn.selected {
+  border-color: var(--g1); background: rgba(14,166,91,0.1);
+  color: var(--g2); box-shadow: 0 0 12px rgba(14,166,91,0.15);
+}
+.doc-guide {
+  background: rgba(245,166,35,0.06); border: 1px solid rgba(245,166,35,0.15);
+  border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 12px;
+  font-size: 0.82rem; color: var(--warn); line-height: 1.6;
+}
+.doc-guide strong { display: block; margin-bottom: 4px; }
+.doc-guide ul { padding-left: 16px; }
+.doc-guide ul li { margin-bottom: 2px; }
+.doc-guide .doc-match-note {
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px solid rgba(245,166,35,0.2);
+  color: var(--t2); font-size: 0.78rem;
+}
+.upload-zone {
+  border: 2px dashed var(--glass-border); border-radius: var(--radius-sm);
+  padding: 20px; text-align: center; cursor: pointer;
+  transition: all 0.3s; position: relative; margin-bottom: 12px;
+  background: var(--glass);
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--g1); background: rgba(14,166,91,0.05);
+}
+.upload-zone input[type="file"] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer;
+  width: 100%; height: 100%; margin: 0; padding: 0; border: none;
+}
+.upload-zone .uz-icon { font-size: 2rem; margin-bottom: 6px; }
+.upload-zone .uz-label { font-size: 0.85rem; color: var(--t2); }
+.upload-zone .uz-sub { font-size: 0.75rem; color: var(--t3); margin-top: 2px; }
+.upload-preview {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(14,166,91,0.08); border: 1px solid rgba(14,166,91,0.2);
+  border-radius: var(--radius-sm); padding: 10px 14px;
+  font-size: 0.85rem; color: var(--g2);
+  margin-bottom: 12px;
+}
+.upload-preview img {
+  width: 44px; height: 44px; object-fit: cover;
+  border-radius: 6px; border: 1px solid rgba(14,166,91,0.2);
+  margin: 0;
+}
+.upload-preview .up-name { flex: 1; word-break: break-all; }
+.upload-preview .up-remove {
+  background: transparent; border: none; cursor: pointer;
+  color: var(--danger); font-size: 1.1rem; padding: 0 4px;
+  transition: transform 0.2s;
+}
+.upload-preview .up-remove:hover { transform: scale(1.2); }
+
+/* Camera section */
+.camera-box {
+  border-radius: var(--radius-sm); overflow: hidden;
+  background: #000; margin-bottom: 10px; position: relative;
+  min-height: 180px; display: flex; align-items: center; justify-content: center;
+}
+.camera-box video, .camera-box canvas {
+  width: 100%; display: block; border-radius: var(--radius-sm);
+}
+.camera-box .cam-placeholder {
+  color: var(--t3); font-size: 0.85rem; text-align: center; padding: 20px;
+}
+.cam-gps-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+  margin-bottom: 10px;
+}
+.cam-gps-badge.ok { background: rgba(14,166,91,0.15); color: var(--g2); border: 1px solid rgba(14,166,91,0.25); }
+.cam-gps-badge.fail { background: rgba(240,82,82,0.12); color: var(--danger); border: 1px solid rgba(240,82,82,0.2); }
+.cam-gps-badge.idle { background: rgba(255,255,255,0.05); color: var(--t3); border: 1px solid var(--glass-border); }
+.cam-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.cam-actions button { flex: 1; min-width: 100px; }
 </style>
 </head>
 <body>
@@ -444,6 +546,89 @@ input[type="range"]::-webkit-slider-thumb {
         <button class="btn btn-secondary" id="hloc" type="button">📍 Use My Current Location</button>
         <span id="hlocv" style="color:var(--g2);font-size:0.85rem;"></span>
       </div>
+
+      <!-- ═══ VERIFICATION DOCUMENTS ═══ -->
+      <div class="verify-section">
+        <div class="verify-title">📋 Verification Documents <span style="font-size:0.75rem;font-weight:500;color:var(--t3);">(required)</span></div>
+        <div class="verify-subtitle">Our team reviews these before your station goes live. All documents are stored securely and never shared publicly.</div>
+
+        <!-- 1. Ownership / Permission -->
+        <div style="margin-bottom:18px;">
+          <label style="margin-bottom:10px;font-size:0.9rem;font-weight:600;color:var(--t);">1️⃣ Ownership or Permission</label>
+          <p style="font-size:0.8rem;color:var(--t3);margin-bottom:10px;">Select how you can offer this place:</p>
+
+          <div class="owner-type-grid" id="ownerTypeGrid">
+            <button class="owner-type-btn" id="ot_home" type="button" onclick="selectOwnerType('home')">🏠<br>Home Owner</button>
+            <button class="owner-type-btn" id="ot_tenant" type="button" onclick="selectOwnerType('tenant')">🔑<br>Tenant</button>
+            <button class="owner-type-btn" id="ot_shop" type="button" onclick="selectOwnerType('shop')">🏪<br>Shop / Business</button>
+          </div>
+
+          <div id="docGuide_home" class="doc-guide hide">
+            <strong>🏠 Home Owner — Upload any one:</strong>
+            <ul>
+              <li>Recent electricity bill (address + name visible)</li>
+              <li>Property tax receipt showing same address and name</li>
+            </ul>
+            <div class="doc-match-note">⚠ The name on the document must match your Google account / ID, and the address must match the pinned location.</div>
+          </div>
+
+          <div id="docGuide_tenant" class="doc-guide hide">
+            <strong>🔑 Tenant — Upload both:</strong>
+            <ul>
+              <li>Rent agreement (showing your name and the address)</li>
+              <li>Written consent letter from the landlord</li>
+            </ul>
+            <div class="doc-match-note">⚠ The name on the document must match your Google account / ID, and the address must match the pinned location.</div>
+          </div>
+
+          <div id="docGuide_shop" class="doc-guide hide">
+            <strong>🏪 Shop / Business — Upload any one:</strong>
+            <ul>
+              <li>Shop licence</li>
+              <li>GST registration certificate</li>
+              <li>Udyam registration certificate</li>
+              <li>Signboard photo clearly showing the business name and address</li>
+            </ul>
+            <div class="doc-match-note">⚠ The name on the document must match your Google account / ID, and the address must match the pinned location.</div>
+          </div>
+
+          <div id="ownershipUploadArea" class="hide">
+            <label style="margin-bottom:6px;">Upload document(s)</label>
+            <div class="upload-zone" id="ownershipZone">
+              <input type="file" id="ownershipFile" accept="image/*,application/pdf" multiple>
+              <div class="uz-icon">📄</div>
+              <div class="uz-label">Tap to select file or drag &amp; drop</div>
+              <div class="uz-sub">JPG, PNG or PDF · Max 5 MB each</div>
+            </div>
+            <div id="ownershipPreviews"></div>
+          </div>
+        </div>
+
+        <!-- 2. Location Photo -->
+        <div>
+          <label style="margin-bottom:6px;font-size:0.9rem;font-weight:600;color:var(--t);">2️⃣ Location Photo <span style="font-size:0.75rem;font-weight:500;color:var(--t3);">(taken inside the app)</span></label>
+          <p style="font-size:0.8rem;color:var(--t3);margin-bottom:10px;line-height:1.5;">
+            Take a photo from inside the app — gallery uploads are not accepted. The photo's GPS must be within <b style="color:var(--warn);">50 m</b> of your pinned station location.
+          </p>
+
+          <div id="camGpsBadge" class="cam-gps-badge idle">📡 Pin your location first, then open camera</div>
+
+          <div class="camera-box" id="cameraBox">
+            <video id="camVideo" autoplay playsinline style="display:none;"></video>
+            <canvas id="camCanvas" style="display:none;"></canvas>
+            <div class="cam-placeholder" id="camPlaceholder">📷 Camera preview will appear here</div>
+          </div>
+
+          <div class="cam-actions">
+            <button class="btn btn-secondary" id="btnOpenCam" type="button">📷 Open Camera</button>
+            <button class="btn btn-primary hide" id="btnSnap" type="button">📸 Take Photo</button>
+            <button class="btn btn-secondary hide" id="btnRetake" type="button">🔄 Retake</button>
+          </div>
+
+          <div id="locationPhotoPreview" class="hide"></div>
+        </div>
+      </div>
+      <!-- ═══ END VERIFICATION DOCUMENTS ═══ -->
 
       <div class="safety-box">
         <label class="inline" style="margin-bottom:0;">
@@ -718,14 +903,216 @@ function render(d, p) {
 
 // ═══════════════ HOST REGISTRATION ═══════════════
 $("hloc").onclick = () => navigator.geolocation.getCurrentPosition(
-  x => { hostPos = x.coords; $("hlocv").textContent = `✅ Captured (${x.coords.latitude.toFixed(4)}, ${x.coords.longitude.toFixed(4)})`; },
+  x => {
+    hostPos = x.coords;
+    $("hlocv").textContent = `✅ Captured (${x.coords.latitude.toFixed(4)}, ${x.coords.longitude.toFixed(4)})`;
+    updateCamGpsBadge(); // refresh GPS badge now that pin is set
+  },
   () => alert("Location permission needed")
 );
+
+// ─── Verification state ───
+let ownerType = null;          // 'home' | 'tenant' | 'shop'
+let ownershipFiles = [];       // FileList items
+let locationPhotoBlob = null;  // Captured in-app photo blob
+let locationPhotoGpsOk = false;
+let camStream = null;
+
+// ── Haversine distance (metres) ──
+function haversineM(lat1, lng1, lat2, lng2) {
+  const R = 6371000, toR = d => d * Math.PI / 180;
+  const dLat = toR(lat2 - lat1), dLng = toR(lng2 - lng1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toR(lat1)) * Math.cos(toR(lat2)) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// ── Owner-type selection ──
+window.selectOwnerType = function(type) {
+  ownerType = type;
+  ['home','tenant','shop'].forEach(t => {
+    $("ot_" + t).classList.toggle("selected", t === type);
+    $("docGuide_" + t).classList.toggle("hide", t !== type);
+  });
+  $("ownershipUploadArea").classList.remove("hide");
+};
+
+// ── File upload handling ──
+$("ownershipFile").onchange = function() {
+  const newFiles = [...this.files];
+  const allowed = ['image/jpeg','image/png','image/webp','application/pdf'];
+  const valid = newFiles.filter(f => allowed.includes(f.type) && f.size <= 5 * 1024 * 1024);
+  const rejected = newFiles.length - valid.length;
+  if (rejected) alert(`${rejected} file(s) skipped: only JPG, PNG, WebP or PDF up to 5 MB each.`);
+  ownershipFiles = [...ownershipFiles, ...valid];
+  renderOwnershipPreviews();
+};
+
+// Drag-and-drop
+const ozEl = $("ownershipZone");
+ozEl.addEventListener("dragover", e => { e.preventDefault(); ozEl.classList.add("drag-over"); });
+ozEl.addEventListener("dragleave", () => ozEl.classList.remove("drag-over"));
+ozEl.addEventListener("drop", e => {
+  e.preventDefault(); ozEl.classList.remove("drag-over");
+  const dt = e.dataTransfer;
+  if (dt && dt.files.length) { $("ownershipFile").files = dt.files; $("ownershipFile").onchange.call($("ownershipFile")); }
+});
+
+function renderOwnershipPreviews() {
+  const area = $("ownershipPreviews");
+  area.replaceChildren();
+  ownershipFiles.forEach((f, i) => {
+    const row = document.createElement("div");
+    row.className = "upload-preview";
+    if (f.type.startsWith("image/")) {
+      const img = document.createElement("img");
+      img.src = URL.createObjectURL(f);
+      row.append(img);
+    } else {
+      const ic = document.createElement("span");
+      ic.textContent = "📄";
+      ic.style.fontSize = "2rem";
+      row.append(ic);
+    }
+    const nm = document.createElement("span");
+    nm.className = "up-name";
+    nm.textContent = f.name + " (" + (f.size/1024).toFixed(0) + " KB)";
+    const rm = document.createElement("button");
+    rm.className = "up-remove";
+    rm.textContent = "✕";
+    rm.type = "button";
+    rm.onclick = () => { ownershipFiles.splice(i, 1); renderOwnershipPreviews(); };
+    row.append(nm, rm);
+    area.append(row);
+  });
+}
+
+// ── Camera capture ──
+function updateCamGpsBadge() {
+  const badge = $("camGpsBadge");
+  if (!hostPos) {
+    badge.textContent = "📡 Pin your location first, then open camera";
+    badge.className = "cam-gps-badge idle";
+    return;
+  }
+  if (locationPhotoBlob && locationPhotoGpsOk) {
+    badge.textContent = "✅ GPS verified — photo is within 50 m of pinned location";
+    badge.className = "cam-gps-badge ok";
+  } else if (locationPhotoBlob && !locationPhotoGpsOk) {
+    badge.textContent = "❌ GPS mismatch — photo taken > 50 m from pinned location";
+    badge.className = "cam-gps-badge fail";
+  } else {
+    badge.textContent = "📍 Location pinned. Open camera to take a photo from this spot.";
+    badge.className = "cam-gps-badge ok";
+  }
+}
+
+$("btnOpenCam").onclick = async () => {
+  if (!hostPos) return alert("Please capture your station location first using 📍 Use My Current Location.");
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+    const vid = $("camVideo");
+    vid.srcObject = camStream;
+    vid.style.display = "block";
+    $("camPlaceholder").style.display = "none";
+    $("camCanvas").style.display = "none";
+    $("btnOpenCam").classList.add("hide");
+    $("btnSnap").classList.remove("hide");
+    $("btnRetake").classList.add("hide");
+    locationPhotoBlob = null; locationPhotoGpsOk = false;
+    updateCamGpsBadge();
+  } catch(e) { alert("Camera error: " + e.message); }
+};
+
+$("btnSnap").onclick = () => {
+  // Get current GPS for the photo
+  navigator.geolocation.getCurrentPosition(gp => {
+    const vid = $("camVideo"), canvas = $("camCanvas");
+    canvas.width = vid.videoWidth; canvas.height = vid.videoHeight;
+    canvas.getContext("2d").drawImage(vid, 0, 0);
+    canvas.toBlob(blob => {
+      locationPhotoBlob = blob;
+      // Stop stream
+      if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+      vid.style.display = "none";
+      canvas.style.display = "block";
+      $("btnSnap").classList.add("hide");
+      $("btnOpenCam").classList.add("hide");
+      $("btnRetake").classList.remove("hide");
+
+      // GPS proximity check
+      const dist = haversineM(gp.coords.latitude, gp.coords.longitude, hostPos.latitude, hostPos.longitude);
+      locationPhotoGpsOk = dist <= 50;
+      updateCamGpsBadge();
+
+      // Thumbnail preview
+      const preview = $("locationPhotoPreview");
+      preview.classList.remove("hide");
+      preview.innerHTML = "";
+      const row = document.createElement("div");
+      row.className = "upload-preview";
+      const img = document.createElement("img");
+      img.src = URL.createObjectURL(blob);
+      const nm = document.createElement("span");
+      nm.className = "up-name";
+      nm.textContent = locationPhotoGpsOk
+        ? `📸 Photo captured · GPS ✅ ${dist.toFixed(0)} m from pin`
+        : `📸 Photo captured · ⚠ GPS ${dist.toFixed(0)} m from pin (must be ≤ 50 m)`;
+      nm.style.color = locationPhotoGpsOk ? "var(--g2)" : "var(--danger)";
+      row.append(img, nm);
+      preview.append(row);
+    }, "image/jpeg", 0.92);
+  }, () => {
+    // GPS unavailable during snap — still capture photo but mark GPS fail
+    const vid = $("camVideo"), canvas = $("camCanvas");
+    canvas.width = vid.videoWidth; canvas.height = vid.videoHeight;
+    canvas.getContext("2d").drawImage(vid, 0, 0);
+    canvas.toBlob(blob => {
+      locationPhotoBlob = blob;
+      locationPhotoGpsOk = false;
+      if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+      vid.style.display = "none";
+      canvas.style.display = "block";
+      $("btnSnap").classList.add("hide");
+      $("btnRetake").classList.remove("hide");
+      $("btnOpenCam").classList.add("hide");
+      updateCamGpsBadge();
+      const preview = $("locationPhotoPreview");
+      preview.classList.remove("hide");
+      preview.innerHTML = "";
+      const row = document.createElement("div");
+      row.className = "upload-preview";
+      const img = document.createElement("img"); img.src = URL.createObjectURL(blob);
+      const nm = document.createElement("span"); nm.className = "up-name";
+      nm.textContent = "📸 Photo captured · ⚠ GPS unavailable";
+      nm.style.color = "var(--danger)";
+      row.append(img, nm); preview.append(row);
+    }, "image/jpeg", 0.92);
+  }, { enableHighAccuracy: true, timeout: 8000 });
+};
+
+$("btnRetake").onclick = () => {
+  locationPhotoBlob = null; locationPhotoGpsOk = false;
+  $("locationPhotoPreview").classList.add("hide");
+  $("locationPhotoPreview").innerHTML = "";
+  $("camCanvas").style.display = "none";
+  $("camPlaceholder").style.display = "";
+  $("btnRetake").classList.add("hide");
+  $("btnOpenCam").classList.remove("hide");
+  updateCamGpsBadge();
+};
 
 $("saveH").onclick = async () => {
   const kw = +$("hkw").value, cn = ticked("hn"), name = $("hname").value.trim();
   if (!name || !$("haddr").value.trim() || !(kw > 0) || !cn.length || !hostPos) return alert("Fill every field and capture your location");
   if (!$("hsafe").checked) return alert("Please confirm the safety declaration");
+
+  // Validate ownership docs
+  if (!ownerType) return alert("Please select your owner type (Home Owner / Tenant / Shop).");
+  if (!ownershipFiles.length) return alert("Please upload at least one ownership/permission document.");
+
+  // Validate location photo
+  if (!locationPhotoBlob) return alert("Please take a location photo using the in-app camera.");
+  if (!locationPhotoGpsOk) return alert("Location photo GPS is too far from your pinned location (must be within 50 m). Please move to the station location and retake the photo.");
 
   $("saveH").disabled = true;
   $("saveH").textContent = "⏳ Submitting...";
@@ -739,6 +1126,7 @@ $("saveH").onclick = async () => {
       kw, pricePerKwh: +$("hprice").value || 0,
       connectors: cn,
       amenities: $("hamen").value.split(",").map(s => s.trim()).filter(Boolean).slice(0, 8),
+      ownerType,
       available: true, status: "pending", trust_rating: 3,
       createdAt: serverTimestamp()
     });
@@ -751,6 +1139,23 @@ $("saveH").onclick = async () => {
     document.querySelectorAll(".hn").forEach(x => x.checked = false);
     $("hsafe").checked = false; hostPos = null;
     $("hlocv").textContent = "";
+    // Reset verification state
+    ownerType = null; ownershipFiles = [];
+    locationPhotoBlob = null; locationPhotoGpsOk = false;
+    ['home','tenant','shop'].forEach(t => {
+      $("ot_" + t).classList.remove("selected");
+      $("docGuide_" + t).classList.add("hide");
+    });
+    $("ownershipUploadArea").classList.add("hide");
+    $("ownershipPreviews").replaceChildren();
+    $("locationPhotoPreview").classList.add("hide");
+    $("locationPhotoPreview").innerHTML = "";
+    $("camCanvas").style.display = "none";
+    $("camPlaceholder").style.display = "";
+    $("btnOpenCam").classList.remove("hide");
+    $("btnSnap").classList.add("hide");
+    $("btnRetake").classList.add("hide");
+    updateCamGpsBadge();
   } catch (e) {
     alert("Error: " + e.message);
   }
