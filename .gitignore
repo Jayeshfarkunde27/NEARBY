@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv/
+env/
+venv/
+
+# Firebase & Secrets
+serviceAccount.json
+*serviceAccount*.json

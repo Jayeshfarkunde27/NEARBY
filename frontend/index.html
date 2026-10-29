@@ -703,6 +703,7 @@ $("btnLogin").onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
 $("btnOut").onclick = () => { signOut(auth); currentRole = null; };
 
 onAuthStateChanged(auth, async u => {
+  console.log("Auth state changed:", u ? u.email : "Signed out");
   $("login").classList.toggle("hide", !!u);
   $("userBar").classList.toggle("hide", !u);
 
@@ -713,17 +714,23 @@ onAuthStateChanged(auth, async u => {
 
   if (u) {
     // Set user info in header
-    $("userName").textContent = u.displayName ? u.displayName.split(" ")[0] : "User";
+    $("userName").textContent = u.displayName ? u.displayName.split(" ")[0] : (u.email ? u.email.split("@")[0] : "User");
     if (u.photoURL) { $("userPhoto").src = u.photoURL; $("userPhoto").style.display = "block"; }
     else { $("userPhoto").style.display = "none"; }
 
-    // Check if user has a saved role
-    const userDoc = await getDoc(doc(db, "users", u.uid));
-    if (userDoc.exists() && userDoc.data().role) {
-      currentRole = userDoc.data().role;
-      activateRole(currentRole);
-    } else {
-      // Show role selection screen
+    try {
+      // Check if user has a saved role
+      const userDoc = await getDoc(doc(db, "users", u.uid));
+      if (userDoc.exists() && userDoc.data().role) {
+        currentRole = userDoc.data().role;
+        activateRole(currentRole);
+      } else {
+        // Show role selection screen
+        $("roleSelect").classList.remove("hide");
+      }
+    } catch (err) {
+      console.warn("Could not fetch user role from Firestore, defaulting to role selection:", err);
+      // Fallback: If Firestore query fails (e.g. offline, permissions, network), show role selection
       $("roleSelect").classList.remove("hide");
     }
   }
@@ -735,10 +742,14 @@ $("roleHost").onclick = () => selectRole("host");
 
 async function selectRole(role) {
   currentRole = role;
-  // Save role to Firestore so it persists
-  await setDoc(doc(db, "users", auth.currentUser.uid), { role, updatedAt: serverTimestamp() }, { merge: true });
   $("roleSelect").classList.add("hide");
   activateRole(role);
+  try {
+    // Save role to Firestore in the background
+    await setDoc(doc(db, "users", auth.currentUser.uid), { role, updatedAt: serverTimestamp() }, { merge: true });
+  } catch (err) {
+    console.warn("Could not save role to Firestore:", err);
+  }
 }
 
 function activateRole(role) {
