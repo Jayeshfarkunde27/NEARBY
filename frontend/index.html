@@ -1,1211 +1,1768 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ChargeNear — Emergency EV Charging</title>
-<meta name="description" content="Find emergency EV charging points near you, or register your own charging station to help fellow EV owners.">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-/* ═══════════════ DESIGN SYSTEM ═══════════════ */
-:root {
-  --g1: #0ea65b; --g2: #06d889; --g3: #04f49e;
-  --bg: #0c1117; --surface: rgba(20, 30, 42, 0.7);
-  --glass: rgba(255,255,255,0.04); --glass-border: rgba(255,255,255,0.08);
-  --t: #e4ecf1; --t2: #8b9db3; --t3: #506073;
-  --danger: #f05252; --warn: #f5a623;
-  --radius: 16px; --radius-sm: 10px;
-  --shadow: 0 8px 32px rgba(0,0,0,0.35);
-  --accent-glow: 0 0 40px rgba(14,166,91,0.25);
-}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ChargeNear — Emergency EV Charging</title>
+  <meta name="description"
+    content="Find emergency EV charging points near you, or register your own charging station to help fellow EV owners.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════ DESIGN SYSTEM ═══════════════ */
+    :root {
+      --g1: #0ea65b;
+      --g2: #06d889;
+      --g3: #04f49e;
+      --bg: #0c1117;
+      --surface: rgba(20, 30, 42, 0.7);
+      --glass: rgba(255, 255, 255, 0.04);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --t: #e4ecf1;
+      --t2: #8b9db3;
+      --t3: #506073;
+      --danger: #f05252;
+      --warn: #f5a623;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+      --accent-glow: 0 0 40px rgba(14, 166, 91, 0.25);
+    }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: var(--bg); color: var(--t);
-  min-height: 100vh; overflow-x: hidden;
-  background-image:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(6,216,137,0.12) 0%, transparent 70%),
-    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(14,166,91,0.08) 0%, transparent 60%);
-}
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--t);
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(6, 216, 137, 0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(14, 166, 91, 0.08) 0%, transparent 60%);
+    }
 
-/* ── HEADER ── */
-header {
-  position: sticky; top: 0; z-index: 100;
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 14px 24px;
-  background: rgba(12,17,23,0.85);
-  backdrop-filter: blur(20px) saturate(1.4);
-  border-bottom: 1px solid var(--glass-border);
-}
-header .brand {
-  font-weight: 800; font-size: 1.25rem;
-  background: linear-gradient(135deg, var(--g1), var(--g3));
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-header .user-info { display: flex; align-items: center; gap: 10px; }
-header .user-info img {
-  width: 32px; height: 32px; border-radius: 50%;
-  border: 2px solid var(--g1); object-fit: cover;
-}
-header .user-info span { font-size: 0.85rem; color: var(--t2); }
+    /* ── HEADER ── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 24px;
+      background: rgba(12, 17, 23, 0.85);
+      backdrop-filter: blur(20px) saturate(1.4);
+      border-bottom: 1px solid var(--glass-border);
+    }
 
-/* ── BUTTONS ── */
-.btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 12px 22px; border: 0; border-radius: var(--radius-sm);
-  font: 600 0.95rem 'Inter', sans-serif; cursor: pointer;
-  transition: all 0.25s ease; letter-spacing: 0.01em;
-}
-.btn-primary {
-  background: linear-gradient(135deg, var(--g1), var(--g2));
-  color: #fff; box-shadow: 0 4px 20px rgba(14,166,91,0.3);
-}
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(14,166,91,0.45); }
-.btn-primary:active { transform: translateY(0); }
-.btn-secondary {
-  background: var(--glass); color: var(--t);
-  border: 1px solid var(--glass-border);
-}
-.btn-secondary:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.14); }
-.btn-danger { background: rgba(240,82,82,0.15); color: var(--danger); border: 1px solid rgba(240,82,82,0.2); }
-.btn-danger:hover { background: rgba(240,82,82,0.25); }
-.btn-sm { padding: 8px 14px; font-size: 0.85rem; border-radius: 8px; }
-.btn-block { width: 100%; }
-.btn-google {
-  background: #fff; color: #333; font-weight: 600;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
-  padding: 14px 28px; font-size: 1rem; border-radius: 12px;
-}
-.btn-google:hover { background: #f5f5f5; transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-.btn-google svg { width: 20px; height: 20px; }
+    header .brand {
+      font-weight: 800;
+      font-size: 1.25rem;
+      background: linear-gradient(135deg, var(--g1), var(--g3));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
 
-/* ── LAYOUT ── */
-main { max-width: 800px; margin: 0 auto; padding: 20px 16px 60px; }
+    header .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-/* ── CARD ── */
-.card {
-  background: var(--surface);
-  backdrop-filter: blur(16px) saturate(1.3);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius); padding: 24px;
-  box-shadow: var(--shadow);
-  margin-bottom: 16px;
-  transition: border-color 0.3s ease;
-}
-.card:hover { border-color: rgba(255,255,255,0.12); }
-.card h3 {
-  font-size: 1.15rem; font-weight: 700; margin-bottom: 6px;
-  background: linear-gradient(135deg, var(--t), var(--t2));
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.card .subtitle { color: var(--t2); font-size: 0.88rem; margin-bottom: 16px; line-height: 1.5; }
+    header .user-info img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--g1);
+      object-fit: cover;
+    }
 
-/* ── INPUTS ── */
-input, select, textarea {
-  width: 100%; padding: 12px 14px; margin-bottom: 12px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-sm); color: var(--t);
-  font: 400 0.92rem 'Inter', sans-serif;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  outline: none;
-}
-input:focus, select:focus, textarea:focus {
-  border-color: var(--g1);
-  box-shadow: 0 0 0 3px rgba(14,166,91,0.15);
-}
-input::placeholder, textarea::placeholder { color: var(--t3); }
-select option { background: #1a2332; color: var(--t); }
+    header .user-info span {
+      font-size: 0.85rem;
+      color: var(--t2);
+    }
 
-label { display: block; font-size: 0.85rem; font-weight: 500; color: var(--t2); margin-bottom: 6px; }
-label.inline { display: inline-flex; align-items: center; gap: 6px; margin-right: 16px; margin-bottom: 10px; font-weight: 400; cursor: pointer; }
-label.inline input[type="checkbox"],
-label.inline input[type="radio"] { width: auto; margin: 0; accent-color: var(--g1); }
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 22px;
+      border: 0;
+      border-radius: var(--radius-sm);
+      font: 600 0.95rem 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      letter-spacing: 0.01em;
+    }
 
-.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--g1), var(--g2));
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(14, 166, 91, 0.3);
+    }
 
-/* ── NAV TABS ── */
-.tabs {
-  display: flex; gap: 4px; padding: 6px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid var(--glass-border);
-  border-radius: 14px; margin-bottom: 20px;
-}
-.tabs button {
-  flex: 1; padding: 10px 8px; border: 0; border-radius: 10px;
-  font: 500 0.88rem 'Inter', sans-serif;
-  color: var(--t2); background: transparent;
-  cursor: pointer; transition: all 0.25s ease;
-}
-.tabs button.active {
-  background: linear-gradient(135deg, var(--g1), var(--g2));
-  color: #fff; box-shadow: 0 2px 12px rgba(14,166,91,0.3);
-}
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 28px rgba(14, 166, 91, 0.45);
+    }
 
-/* ── RANGE SLIDER ── */
-input[type="range"] {
-  -webkit-appearance: none; height: 6px; border-radius: 3px;
-  background: linear-gradient(90deg, var(--g1), var(--g2));
-  padding: 0; margin: 6px 0 14px; border: none;
-}
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 22px; height: 22px;
-  border-radius: 50%; background: #fff; cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-}
+    .btn-primary:active {
+      transform: translateY(0);
+    }
 
-/* ── MAP ── */
-#map {
-  height: 340px; border-radius: var(--radius);
-  background: rgba(255,255,255,0.03);
-  border: 1px solid var(--glass-border);
-  margin-bottom: 16px; overflow: hidden;
-}
+    .btn-secondary {
+      background: var(--glass);
+      color: var(--t);
+      border: 1px solid var(--glass-border);
+    }
 
-/* ── ANIMATIONS ── */
-.hide { display: none !important; }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.14);
+    }
 
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.fade-up { animation: fadeUp 0.5s ease-out forwards; }
+    .btn-danger {
+      background: rgba(240, 82, 82, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(240, 82, 82, 0.2);
+    }
 
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(14,166,91,0.2); }
-  50% { box-shadow: 0 0 40px rgba(14,166,91,0.4); }
-}
+    .btn-danger:hover {
+      background: rgba(240, 82, 82, 0.25);
+    }
 
-/* ── ROLE SELECTION SCREEN ── */
-#roleSelect {
-  text-align: center;
-  padding-top: 30px;
-}
-#roleSelect h2 {
-  font-size: 1.6rem; font-weight: 800; margin-bottom: 8px;
-}
-#roleSelect .tagline {
-  color: var(--t2); font-size: 0.95rem; margin-bottom: 36px; line-height: 1.5;
-}
-.role-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-  max-width: 560px; margin: 0 auto;
-}
-@media (max-width: 500px) { .role-grid { grid-template-columns: 1fr; } }
+    .btn-sm {
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      border-radius: 8px;
+    }
 
-.role-card {
-  background: var(--surface);
-  backdrop-filter: blur(16px) saturate(1.3);
-  border: 2px solid var(--glass-border);
-  border-radius: 20px; padding: 32px 24px;
-  cursor: pointer; transition: all 0.35s ease;
-  text-align: center; position: relative; overflow: hidden;
-}
-.role-card::before {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(14,166,91,0.08), transparent);
-  opacity: 0; transition: opacity 0.35s ease;
-}
-.role-card:hover {
-  border-color: var(--g1);
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(14,166,91,0.2);
-}
-.role-card:hover::before { opacity: 1; }
-.role-card .icon {
-  font-size: 3rem; margin-bottom: 16px; display: block;
-  filter: drop-shadow(0 4px 12px rgba(14,166,91,0.3));
-}
-.role-card h3 {
-  font-size: 1.15rem; font-weight: 700; margin-bottom: 8px;
-  background: none; -webkit-text-fill-color: var(--t);
-}
-.role-card p { font-size: 0.85rem; color: var(--t2); line-height: 1.5; }
+    .btn-block {
+      width: 100%;
+    }
 
-/* ── LOGIN HERO ── */
-#login {
-  display: flex; flex-direction: column; align-items: center;
-  justify-content: center; text-align: center;
-  min-height: 60vh; padding: 40px 20px;
-}
-#login .hero-icon { font-size: 4rem; margin-bottom: 20px; }
-#login h2 {
-  font-size: 2rem; font-weight: 800; margin-bottom: 8px;
-  background: linear-gradient(135deg, #fff, var(--g3));
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-#login p { color: var(--t2); margin-bottom: 32px; font-size: 1.05rem; max-width: 420px; line-height: 1.6; }
+    .btn-google {
+      background: #fff;
+      color: #333;
+      font-weight: 600;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+      padding: 14px 28px;
+      font-size: 1rem;
+      border-radius: 12px;
+    }
 
-/* ── STATUS CHIPS ── */
-.chip {
-  display: inline-block; padding: 4px 10px;
-  border-radius: 20px; font-size: 0.75rem; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.04em;
-}
-.chip-pending { background: rgba(245,166,35,0.15); color: var(--warn); }
-.chip-verified { background: rgba(14,166,91,0.15); color: var(--g2); }
-.chip-suspended { background: rgba(240,82,82,0.15); color: var(--danger); }
+    .btn-google:hover {
+      background: #f5f5f5;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
 
-/* ── STATION CARD ── */
-.station-card {
-  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
-}
-.station-card .info { flex: 1; }
-.station-card .info h4 { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
-.station-card .info .meta { font-size: 0.82rem; color: var(--t2); line-height: 1.6; }
-.station-card .actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+    .btn-google svg {
+      width: 20px;
+      height: 20px;
+    }
 
-/* ── SAFETY DECLARATION ── */
-.safety-box {
-  background: rgba(245,166,35,0.06);
-  border: 1px solid rgba(245,166,35,0.15);
-  border-radius: var(--radius-sm);
-  padding: 14px; margin-bottom: 14px;
-}
-.safety-box label.inline { color: var(--warn); font-size: 0.82rem; line-height: 1.5; }
+    /* ── LAYOUT ── */
+    main {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px 16px 60px;
+    }
 
-/* ── RESULT CARDS ── */
-.result-card { position: relative; }
-.result-card .rank {
-  position: absolute; top: -8px; left: -8px;
-  width: 30px; height: 30px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--g1), var(--g2));
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 0.85rem; color: #fff;
-  box-shadow: 0 2px 8px rgba(14,166,91,0.3);
-}
-.result-card .name { font-weight: 600; font-size: 1.02rem; margin-left: 24px; margin-bottom: 6px; }
-.result-card .detail { font-size: 0.85rem; color: var(--t2); line-height: 1.6; }
-.result-card a {
-  display: inline-flex; align-items: center; gap: 4px;
-  color: var(--g2); font-weight: 600; font-size: 0.88rem;
-  text-decoration: none; margin-top: 8px;
-  transition: color 0.2s;
-}
-.result-card a:hover { color: var(--g3); }
+    /* ── CARD ── */
+    .card {
+      background: var(--surface);
+      backdrop-filter: blur(16px) saturate(1.3);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+      transition: border-color 0.3s ease;
+    }
 
-/* ── BADGE/SWITCH ROLE ── */
-.switch-role-btn {
-  margin-top: 20px; text-align: center;
-}
-.switch-role-btn button {
-  background: transparent; border: 1px dashed var(--glass-border);
-  color: var(--t2); padding: 10px 20px; border-radius: var(--radius-sm);
-  font: 500 0.85rem 'Inter', sans-serif; cursor: pointer;
-  transition: all 0.25s;
-}
-.switch-role-btn button:hover { border-color: var(--g1); color: var(--g2); }
+    .card:hover {
+      border-color: rgba(255, 255, 255, 0.12);
+    }
 
-/* ── VERIFICATION DOCS ── */
-.verify-section {
-  border: 1px solid rgba(14,166,91,0.2);
-  border-radius: var(--radius);
-  background: rgba(14,166,91,0.03);
-  padding: 20px;
-  margin-bottom: 16px;
-}
-.verify-section .verify-title {
-  font-size: 0.95rem; font-weight: 700; color: var(--g2);
-  display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
-}
-.verify-section .verify-subtitle {
-  font-size: 0.8rem; color: var(--t3); margin-bottom: 16px; line-height: 1.5;
-}
-.owner-type-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px;
-}
-@media (max-width: 480px) { .owner-type-grid { grid-template-columns: 1fr; } }
-.owner-type-btn {
-  padding: 10px 6px; border: 1px solid var(--glass-border);
-  border-radius: 10px; background: var(--glass);
-  color: var(--t2); font: 500 0.82rem 'Inter', sans-serif;
-  cursor: pointer; transition: all 0.25s; text-align: center;
-}
-.owner-type-btn:hover { border-color: var(--g1); color: var(--g2); }
-.owner-type-btn.selected {
-  border-color: var(--g1); background: rgba(14,166,91,0.1);
-  color: var(--g2); box-shadow: 0 0 12px rgba(14,166,91,0.15);
-}
-.doc-guide {
-  background: rgba(245,166,35,0.06); border: 1px solid rgba(245,166,35,0.15);
-  border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 12px;
-  font-size: 0.82rem; color: var(--warn); line-height: 1.6;
-}
-.doc-guide strong { display: block; margin-bottom: 4px; }
-.doc-guide ul { padding-left: 16px; }
-.doc-guide ul li { margin-bottom: 2px; }
-.doc-guide .doc-match-note {
-  margin-top: 8px; padding-top: 8px;
-  border-top: 1px solid rgba(245,166,35,0.2);
-  color: var(--t2); font-size: 0.78rem;
-}
-.upload-zone {
-  border: 2px dashed var(--glass-border); border-radius: var(--radius-sm);
-  padding: 20px; text-align: center; cursor: pointer;
-  transition: all 0.3s; position: relative; margin-bottom: 12px;
-  background: var(--glass);
-}
-.upload-zone:hover, .upload-zone.drag-over {
-  border-color: var(--g1); background: rgba(14,166,91,0.05);
-}
-.upload-zone input[type="file"] {
-  position: absolute; inset: 0; opacity: 0; cursor: pointer;
-  width: 100%; height: 100%; margin: 0; padding: 0; border: none;
-}
-.upload-zone .uz-icon { font-size: 2rem; margin-bottom: 6px; }
-.upload-zone .uz-label { font-size: 0.85rem; color: var(--t2); }
-.upload-zone .uz-sub { font-size: 0.75rem; color: var(--t3); margin-top: 2px; }
-.upload-preview {
-  display: flex; align-items: center; gap: 10px;
-  background: rgba(14,166,91,0.08); border: 1px solid rgba(14,166,91,0.2);
-  border-radius: var(--radius-sm); padding: 10px 14px;
-  font-size: 0.85rem; color: var(--g2);
-  margin-bottom: 12px;
-}
-.upload-preview img {
-  width: 44px; height: 44px; object-fit: cover;
-  border-radius: 6px; border: 1px solid rgba(14,166,91,0.2);
-  margin: 0;
-}
-.upload-preview .up-name { flex: 1; word-break: break-all; }
-.upload-preview .up-remove {
-  background: transparent; border: none; cursor: pointer;
-  color: var(--danger); font-size: 1.1rem; padding: 0 4px;
-  transition: transform 0.2s;
-}
-.upload-preview .up-remove:hover { transform: scale(1.2); }
+    .card h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, var(--t), var(--t2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
 
-/* Camera section */
-.camera-box {
-  border-radius: var(--radius-sm); overflow: hidden;
-  background: #000; margin-bottom: 10px; position: relative;
-  min-height: 180px; display: flex; align-items: center; justify-content: center;
-}
-.camera-box video, .camera-box canvas {
-  width: 100%; display: block; border-radius: var(--radius-sm);
-}
-.camera-box .cam-placeholder {
-  color: var(--t3); font-size: 0.85rem; text-align: center; padding: 20px;
-}
-.cam-gps-badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
-  margin-bottom: 10px;
-}
-.cam-gps-badge.ok { background: rgba(14,166,91,0.15); color: var(--g2); border: 1px solid rgba(14,166,91,0.25); }
-.cam-gps-badge.fail { background: rgba(240,82,82,0.12); color: var(--danger); border: 1px solid rgba(240,82,82,0.2); }
-.cam-gps-badge.idle { background: rgba(255,255,255,0.05); color: var(--t3); border: 1px solid var(--glass-border); }
-.cam-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-.cam-actions button { flex: 1; min-width: 100px; }
-</style>
+    .card .subtitle {
+      color: var(--t2);
+      font-size: 0.88rem;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    /* ── INPUTS ── */
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      color: var(--t);
+      font: 400 0.92rem 'Inter', sans-serif;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--g1);
+      box-shadow: 0 0 0 3px rgba(14, 166, 91, 0.15);
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: var(--t3);
+    }
+
+    select option {
+      background: #1a2332;
+      color: var(--t);
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--t2);
+      margin-bottom: 6px;
+    }
+
+    label.inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-right: 16px;
+      margin-bottom: 10px;
+      font-weight: 400;
+      cursor: pointer;
+    }
+
+    label.inline input[type="checkbox"],
+    label.inline input[type="radio"] {
+      width: auto;
+      margin: 0;
+      accent-color: var(--g1);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+    }
+
+    /* ── NAV TABS ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 6px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      margin-bottom: 20px;
+    }
+
+    .tabs button {
+      flex: 1;
+      padding: 10px 8px;
+      border: 0;
+      border-radius: 10px;
+      font: 500 0.88rem 'Inter', sans-serif;
+      color: var(--t2);
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .tabs button.active {
+      background: linear-gradient(135deg, var(--g1), var(--g2));
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(14, 166, 91, 0.3);
+    }
+
+    /* ── RANGE SLIDER ── */
+    input[type="range"] {
+      -webkit-appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--g1), var(--g2));
+      padding: 0;
+      margin: 6px 0 14px;
+      border: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* ── MAP ── */
+    #map {
+      height: 340px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--glass-border);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    /* ── ANIMATIONS ── */
+    .hide {
+      display: none !important;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .fade-up {
+      animation: fadeUp 0.5s ease-out forwards;
+    }
+
+    @keyframes pulse-glow {
+
+      0%,
+      100% {
+        box-shadow: 0 0 20px rgba(14, 166, 91, 0.2);
+      }
+
+      50% {
+        box-shadow: 0 0 40px rgba(14, 166, 91, 0.4);
+      }
+    }
+
+    /* ── ROLE SELECTION SCREEN ── */
+    #roleSelect {
+      text-align: center;
+      padding-top: 30px;
+    }
+
+    #roleSelect h2 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    #roleSelect .tagline {
+      color: var(--t2);
+      font-size: 0.95rem;
+      margin-bottom: 36px;
+      line-height: 1.5;
+    }
+
+    .role-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 500px) {
+      .role-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .role-card {
+      background: var(--surface);
+      backdrop-filter: blur(16px) saturate(1.3);
+      border: 2px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 32px 24px;
+      cursor: pointer;
+      transition: all 0.35s ease;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .role-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(14, 166, 91, 0.08), transparent);
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+
+    .role-card:hover {
+      border-color: var(--g1);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(14, 166, 91, 0.2);
+    }
+
+    .role-card:hover::before {
+      opacity: 1;
+    }
+
+    .role-card .icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+      display: block;
+      filter: drop-shadow(0 4px 12px rgba(14, 166, 91, 0.3));
+    }
+
+    .role-card h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: none;
+      -webkit-text-fill-color: var(--t);
+    }
+
+    .role-card p {
+      font-size: 0.85rem;
+      color: var(--t2);
+      line-height: 1.5;
+    }
+
+    /* ── LOGIN HERO ── */
+    #login {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 60vh;
+      padding: 40px 20px;
+    }
+
+    #login .hero-icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+    }
+
+    #login h2 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #fff, var(--g3));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    #login p {
+      color: var(--t2);
+      margin-bottom: 32px;
+      font-size: 1.05rem;
+      max-width: 420px;
+      line-height: 1.6;
+    }
+
+    /* ── STATUS CHIPS ── */
+    .chip {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .chip-pending {
+      background: rgba(245, 166, 35, 0.15);
+      color: var(--warn);
+    }
+
+    .chip-verified {
+      background: rgba(14, 166, 91, 0.15);
+      color: var(--g2);
+    }
+
+    .chip-suspended {
+      background: rgba(240, 82, 82, 0.15);
+      color: var(--danger);
+    }
+
+    /* ── STATION CARD ── */
+    .station-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .station-card .info {
+      flex: 1;
+    }
+
+    .station-card .info h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .station-card .info .meta {
+      font-size: 0.82rem;
+      color: var(--t2);
+      line-height: 1.6;
+    }
+
+    .station-card .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    /* ── SAFETY DECLARATION ── */
+    .safety-box {
+      background: rgba(245, 166, 35, 0.06);
+      border: 1px solid rgba(245, 166, 35, 0.15);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .safety-box label.inline {
+      color: var(--warn);
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+
+    /* ── RESULT CARDS ── */
+    .result-card {
+      position: relative;
+    }
+
+    .result-card .rank {
+      position: absolute;
+      top: -8px;
+      left: -8px;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--g1), var(--g2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(14, 166, 91, 0.3);
+    }
+
+    .result-card .name {
+      font-weight: 600;
+      font-size: 1.02rem;
+      margin-left: 24px;
+      margin-bottom: 6px;
+    }
+
+    .result-card .detail {
+      font-size: 0.85rem;
+      color: var(--t2);
+      line-height: 1.6;
+    }
+
+    .result-card a {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--g2);
+      font-weight: 600;
+      font-size: 0.88rem;
+      text-decoration: none;
+      margin-top: 8px;
+      transition: color 0.2s;
+    }
+
+    .result-card a:hover {
+      color: var(--g3);
+    }
+
+    /* ── BADGE/SWITCH ROLE ── */
+    .switch-role-btn {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .switch-role-btn button {
+      background: transparent;
+      border: 1px dashed var(--glass-border);
+      color: var(--t2);
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      font: 500 0.85rem 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+
+    .switch-role-btn button:hover {
+      border-color: var(--g1);
+      color: var(--g2);
+    }
+
+    /* ── VERIFICATION DOCS ── */
+    .verify-section {
+      border: 1px solid rgba(14, 166, 91, 0.2);
+      border-radius: var(--radius);
+      background: rgba(14, 166, 91, 0.03);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .verify-section .verify-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--g2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .verify-section .verify-subtitle {
+      font-size: 0.8rem;
+      color: var(--t3);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .owner-type-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    @media (max-width: 480px) {
+      .owner-type-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .owner-type-btn {
+      padding: 10px 6px;
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      background: var(--glass);
+      color: var(--t2);
+      font: 500 0.82rem 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.25s;
+      text-align: center;
+    }
+
+    .owner-type-btn:hover {
+      border-color: var(--g1);
+      color: var(--g2);
+    }
+
+    .owner-type-btn.selected {
+      border-color: var(--g1);
+      background: rgba(14, 166, 91, 0.1);
+      color: var(--g2);
+      box-shadow: 0 0 12px rgba(14, 166, 91, 0.15);
+    }
+
+    .doc-guide {
+      background: rgba(245, 166, 35, 0.06);
+      border: 1px solid rgba(245, 166, 35, 0.15);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      font-size: 0.82rem;
+      color: var(--warn);
+      line-height: 1.6;
+    }
+
+    .doc-guide strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .doc-guide ul {
+      padding-left: 16px;
+    }
+
+    .doc-guide ul li {
+      margin-bottom: 2px;
+    }
+
+    .doc-guide .doc-match-note {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(245, 166, 35, 0.2);
+      color: var(--t2);
+      font-size: 0.78rem;
+    }
+
+    .upload-zone {
+      border: 2px dashed var(--glass-border);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      margin-bottom: 12px;
+      background: var(--glass);
+    }
+
+    .upload-zone:hover,
+    .upload-zone.drag-over {
+      border-color: var(--g1);
+      background: rgba(14, 166, 91, 0.05);
+    }
+
+    .upload-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      border: none;
+    }
+
+    .upload-zone .uz-icon {
+      font-size: 2rem;
+      margin-bottom: 6px;
+    }
+
+    .upload-zone .uz-label {
+      font-size: 0.85rem;
+      color: var(--t2);
+    }
+
+    .upload-zone .uz-sub {
+      font-size: 0.75rem;
+      color: var(--t3);
+      margin-top: 2px;
+    }
+
+    .upload-preview {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(14, 166, 91, 0.08);
+      border: 1px solid rgba(14, 166, 91, 0.2);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      color: var(--g2);
+      margin-bottom: 12px;
+    }
+
+    .upload-preview img {
+      width: 44px;
+      height: 44px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid rgba(14, 166, 91, 0.2);
+      margin: 0;
+    }
+
+    .upload-preview .up-name {
+      flex: 1;
+      word-break: break-all;
+    }
+
+    .upload-preview .up-remove {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--danger);
+      font-size: 1.1rem;
+      padding: 0 4px;
+      transition: transform 0.2s;
+    }
+
+    .upload-preview .up-remove:hover {
+      transform: scale(1.2);
+    }
+
+    /* Camera section */
+    .camera-box {
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: #000;
+      margin-bottom: 10px;
+      position: relative;
+      min-height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .camera-box video,
+    .camera-box canvas {
+      width: 100%;
+      display: block;
+      border-radius: var(--radius-sm);
+    }
+
+    .camera-box .cam-placeholder {
+      color: var(--t3);
+      font-size: 0.85rem;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .cam-gps-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .cam-gps-badge.ok {
+      background: rgba(14, 166, 91, 0.15);
+      color: var(--g2);
+      border: 1px solid rgba(14, 166, 91, 0.25);
+    }
+
+    .cam-gps-badge.fail {
+      background: rgba(240, 82, 82, 0.12);
+      color: var(--danger);
+      border: 1px solid rgba(240, 82, 82, 0.2);
+    }
+
+    .cam-gps-badge.idle {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--t3);
+      border: 1px solid var(--glass-border);
+    }
+
+    .cam-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .cam-actions button {
+      flex: 1;
+      min-width: 100px;
+    }
+  </style>
 </head>
+
 <body>
 
-<!-- ═══════════════ HEADER ═══════════════ -->
-<header>
-  <span class="brand">⚡ ChargeNear</span>
-  <div class="user-info hide" id="userBar">
-    <span id="userName"></span>
-    <img id="userPhoto" src="" alt="avatar">
-    <button class="btn btn-secondary btn-sm" id="btnOut">Sign out</button>
-  </div>
-</header>
-
-<main>
-
-<!-- ═══════════════ LOGIN SCREEN ═══════════════ -->
-<div id="login" class="fade-up">
-  <div class="hero-icon">⚡</div>
-  <h2>Emergency EV Charging</h2>
-  <p>Find nearby charging points when you're running low, or share your charger and earn — powered by community trust.</p>
-  <button class="btn btn-google" id="btnLogin">
-    <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.97 10.97 0 001 12c0 1.78.43 3.46 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-    Sign in with Google
-  </button>
-</div>
-
-<!-- ═══════════════ ROLE SELECTION ═══════════════ -->
-<div id="roleSelect" class="hide">
-  <h2>Welcome! How will you use ChargeNear?</h2>
-  <p class="tagline">Choose your role to get started. You can switch anytime.</p>
-  <div class="role-grid">
-    <div class="role-card" id="roleEV">
-      <span class="icon">🚗</span>
-      <h3>EV Owner</h3>
-      <p>Find emergency charging points near you, manage your vehicles, and get real-time reachability estimates.</p>
+  <!-- ═══════════════ HEADER ═══════════════ -->
+  <header>
+    <span class="brand">⚡ ChargeNear</span>
+    <div class="user-info hide" id="userBar">
+      <span id="userName"></span>
+      <img id="userPhoto" src="" alt="avatar">
+      <button class="btn btn-secondary btn-sm" id="btnOut">Sign out</button>
     </div>
-    <div class="role-card" id="roleHost">
-      <span class="icon">🔌</span>
-      <h3>Charging Point Owner</h3>
-      <p>Register your charging station, set pricing, manage availability, and earn from your setup.</p>
+  </header>
+  <div id="debugBanner" style="display:none;background:#f05252;color:#fff;padding:10px 16px;text-align:center;font-weight:600;font-size:0.85rem;position:sticky;top:60px;z-index:999;"></div>
+
+  <main>
+
+    <!-- ═══════════════ LOGIN SCREEN ═══════════════ -->
+    <div id="login" class="fade-up">
+      <div class="hero-icon">⚡</div>
+      <h2>Emergency EV Charging</h2>
+      <p>Find nearby charging points when you're running low, or share your charger and earn — powered by community
+        trust.</p>
+      <button class="btn btn-google" id="btnLogin">
+        <svg viewBox="0 0 24 24">
+          <path fill="#4285F4"
+            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
+          <path fill="#34A853"
+            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+          <path fill="#FBBC05"
+            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.97 10.97 0 001 12c0 1.78.43 3.46 1.18 4.93l3.66-2.84z" />
+          <path fill="#EA4335"
+            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+        </svg>
+        Sign in with Google
+      </button>
     </div>
-  </div>
-</div>
 
-<!-- ═══════════════ EV OWNER APP ═══════════════ -->
-<div id="evApp" class="hide">
-  <div class="tabs" id="evTabs">
-    <button data-t="find" class="active">🔍 Find Charger</button>
-    <button data-t="vehicles">🚗 My Vehicles</button>
-  </div>
-
-  <!-- ── Find Charger ── -->
-  <section id="t_find" class="fade-up">
-    <div class="card">
-      <h3>Find a Charger</h3>
-      <p class="subtitle">We'll find hosts you can safely reach with your current battery.</p>
-      <label>Select Vehicle</label>
-      <select id="fv"></select>
-      <label>Battery remaining: <b id="socv" style="color:var(--g2)">10</b>%</label>
-      <input id="soc" type="range" min="1" max="100" value="10">
-      <label class="inline"><input type="checkbox" id="ac"> AC is on</label>
-      <label>Distance to destination (optional)</label>
-      <input id="dest" type="number" min="0" placeholder="km to your destination">
-      <button class="btn btn-primary btn-block" id="btnFind">⚡ Find chargers I can reach</button>
-    </div>
-    <div id="map"></div>
-    <p id="range" style="color:var(--t2);font-size:0.9rem;margin-bottom:12px;"></p>
-    <div id="res"></div>
-  </section>
-
-  <!-- ── My Vehicles ── -->
-  <section id="t_vehicles" class="hide fade-up">
-    <div class="card">
-      <h3>Add a Vehicle</h3>
-      <p class="subtitle">Add your EV so we can calculate your real range accurately.</p>
-      <label>Nickname</label>
-      <input id="nick" placeholder="e.g. My Nexon EV" maxlength="40">
-      <label>Model</label>
-      <select id="cat"></select>
-      <label>Vehicle Type</label>
-      <select id="vtype">
-        <option>2W</option><option>3W</option><option selected>4W</option>
-      </select>
-      <div class="row">
-        <div><label>Battery kWh</label><input id="kwh" type="number" step="0.1" placeholder="30.2"></div>
-        <div><label>Wh per km</label><input id="whkm" type="number" placeholder="150"></div>
-        <div><label>Health %</label><input id="hp" type="number" value="100" placeholder="100"></div>
-      </div>
-      <label style="margin-bottom:10px;">Connectors</label>
-      <div>
-        <label class="inline"><input type="checkbox" class="cn" value="socket15A"> 15A Socket</label>
-        <label class="inline"><input type="checkbox" class="cn" value="type2"> Type 2</label>
-        <label class="inline"><input type="checkbox" class="cn" value="ccs2"> CCS2</label>
-      </div><br>
-      <button class="btn btn-primary btn-block" id="saveV">💾 Save Vehicle</button>
-    </div>
-    <div id="vlist"></div>
-  </section>
-
-  <div class="switch-role-btn">
-    <button id="switchToHost">🔌 Switch to Charging Point Owner view →</button>
-  </div>
-</div>
-
-<!-- ═══════════════ CHARGING POINT OWNER APP ═══════════════ -->
-<div id="hostApp" class="hide">
-  <div class="tabs" id="hostTabs">
-    <button data-t="register" class="active">➕ Register Station</button>
-    <button data-t="myStations">📋 My Stations</button>
-  </div>
-
-  <!-- ── Register Station ── -->
-  <section id="t_register" class="fade-up">
-    <div class="card">
-      <h3>Register Your Charging Point</h3>
-      <p class="subtitle">Your listing will be reviewed and verified by our team before it goes live. Only verified stations appear to EV owners searching for chargers.</p>
-
-      <label>Station / Place Name</label>
-      <input id="hname" placeholder="e.g. Shree Residency Garage" maxlength="60">
-
-      <label>Full Address <span style="color:var(--t3);font-weight:400;">(shown only after booking)</span></label>
-      <input id="haddr" placeholder="e.g. Plot 14, Lane 3, Baner, Pune 411045">
-
-      <div class="row">
-        <div><label>Charger Power (kW)</label><input id="hkw" type="number" step="0.1" placeholder="3.3"></div>
-        <div><label>Price (₹/kWh)</label><input id="hprice" type="number" placeholder="12"></div>
-      </div>
-
-      <label style="margin-bottom:10px;">Available Connectors</label>
-      <div>
-        <label class="inline"><input type="checkbox" class="hn" value="socket15A"> 15A Socket</label>
-        <label class="inline"><input type="checkbox" class="hn" value="type2"> Type 2</label>
-        <label class="inline"><input type="checkbox" class="hn" value="ccs2"> CCS2</label>
-      </div>
-
-      <label>Amenities <span style="color:var(--t3);font-weight:400;">(comma separated)</span></label>
-      <input id="hamen" placeholder="seating, tea, restroom, parking, wifi">
-
-      <label>Station Location</label>
-      <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;">
-        <button class="btn btn-secondary" id="hloc" type="button">📍 Use My Current Location</button>
-        <span id="hlocv" style="color:var(--g2);font-size:0.85rem;"></span>
-      </div>
-
-      <!-- ═══ VERIFICATION DOCUMENTS ═══ -->
-      <div class="verify-section">
-        <div class="verify-title">📋 Verification Documents <span style="font-size:0.75rem;font-weight:500;color:var(--t3);">(required)</span></div>
-        <div class="verify-subtitle">Our team reviews these before your station goes live. All documents are stored securely and never shared publicly.</div>
-
-        <!-- 1. Ownership / Permission -->
-        <div style="margin-bottom:18px;">
-          <label style="margin-bottom:10px;font-size:0.9rem;font-weight:600;color:var(--t);">1️⃣ Ownership or Permission</label>
-          <p style="font-size:0.8rem;color:var(--t3);margin-bottom:10px;">Select how you can offer this place:</p>
-
-          <div class="owner-type-grid" id="ownerTypeGrid">
-            <button class="owner-type-btn" id="ot_home" type="button" onclick="selectOwnerType('home')">🏠<br>Home Owner</button>
-            <button class="owner-type-btn" id="ot_tenant" type="button" onclick="selectOwnerType('tenant')">🔑<br>Tenant</button>
-            <button class="owner-type-btn" id="ot_shop" type="button" onclick="selectOwnerType('shop')">🏪<br>Shop / Business</button>
-          </div>
-
-          <div id="docGuide_home" class="doc-guide hide">
-            <strong>🏠 Home Owner — Upload any one:</strong>
-            <ul>
-              <li>Recent electricity bill (address + name visible)</li>
-              <li>Property tax receipt showing same address and name</li>
-            </ul>
-            <div class="doc-match-note">⚠ The name on the document must match your Google account / ID, and the address must match the pinned location.</div>
-          </div>
-
-          <div id="docGuide_tenant" class="doc-guide hide">
-            <strong>🔑 Tenant — Upload both:</strong>
-            <ul>
-              <li>Rent agreement (showing your name and the address)</li>
-              <li>Written consent letter from the landlord</li>
-            </ul>
-            <div class="doc-match-note">⚠ The name on the document must match your Google account / ID, and the address must match the pinned location.</div>
-          </div>
-
-          <div id="docGuide_shop" class="doc-guide hide">
-            <strong>🏪 Shop / Business — Upload any one:</strong>
-            <ul>
-              <li>Shop licence</li>
-              <li>GST registration certificate</li>
-              <li>Udyam registration certificate</li>
-              <li>Signboard photo clearly showing the business name and address</li>
-            </ul>
-            <div class="doc-match-note">⚠ The name on the document must match your Google account / ID, and the address must match the pinned location.</div>
-          </div>
-
-          <div id="ownershipUploadArea" class="hide">
-            <label style="margin-bottom:6px;">Upload document(s)</label>
-            <div class="upload-zone" id="ownershipZone">
-              <input type="file" id="ownershipFile" accept="image/*,application/pdf" multiple>
-              <div class="uz-icon">📄</div>
-              <div class="uz-label">Tap to select file or drag &amp; drop</div>
-              <div class="uz-sub">JPG, PNG or PDF · Max 5 MB each</div>
-            </div>
-            <div id="ownershipPreviews"></div>
-          </div>
-        </div>
-
-        <!-- 2. Location Photo -->
-        <div>
-          <label style="margin-bottom:6px;font-size:0.9rem;font-weight:600;color:var(--t);">2️⃣ Location Photo <span style="font-size:0.75rem;font-weight:500;color:var(--t3);">(taken inside the app)</span></label>
-          <p style="font-size:0.8rem;color:var(--t3);margin-bottom:10px;line-height:1.5;">
-            Take a photo from inside the app — gallery uploads are not accepted. The photo's GPS must be within <b style="color:var(--warn);">50 m</b> of your pinned station location.
+    <!-- ═══════════════ ROLE SELECTION ═══════════════ -->
+    <div id="roleSelect" class="hide">
+      <h2>Welcome! How will you use ChargeNear?</h2>
+      <p class="tagline">Choose your role to get started. You can switch anytime.</p>
+      <div class="role-grid">
+        <div class="role-card" id="roleEV">
+          <span class="icon">🚗</span>
+          <h3>EV Owner</h3>
+          <p>Find emergency charging points near you, manage your vehicles, and get real-time reachability estimates.
           </p>
-
-          <div id="camGpsBadge" class="cam-gps-badge idle">📡 Pin your location first, then open camera</div>
-
-          <div class="camera-box" id="cameraBox">
-            <video id="camVideo" autoplay playsinline style="display:none;"></video>
-            <canvas id="camCanvas" style="display:none;"></canvas>
-            <div class="cam-placeholder" id="camPlaceholder">📷 Camera preview will appear here</div>
-          </div>
-
-          <div class="cam-actions">
-            <button class="btn btn-secondary" id="btnOpenCam" type="button">📷 Open Camera</button>
-            <button class="btn btn-primary hide" id="btnSnap" type="button">📸 Take Photo</button>
-            <button class="btn btn-secondary hide" id="btnRetake" type="button">🔄 Retake</button>
-          </div>
-
-          <div id="locationPhotoPreview" class="hide"></div>
+        </div>
+        <div class="role-card" id="roleHost">
+          <span class="icon">🔌</span>
+          <h3>Charging Point Owner</h3>
+          <p>Register your charging station, set pricing, manage availability, and earn from your setup.</p>
         </div>
       </div>
-      <!-- ═══ END VERIFICATION DOCUMENTS ═══ -->
+    </div>
 
-      <div class="safety-box">
-        <label class="inline" style="margin-bottom:0;">
-          <input type="checkbox" id="hsafe">
-          I confirm earthing, MCB/RCCB and a weatherproof socket are in place, and I accept the host agreement.
-        </label>
+    <!-- ═══════════════ EV OWNER APP ═══════════════ -->
+    <div id="evApp" class="hide">
+      <div class="tabs" id="evTabs">
+        <button data-t="find" class="active">🔍 Find Charger</button>
+        <button data-t="vehicles">🚗 My Vehicles</button>
       </div>
 
-      <button class="btn btn-primary btn-block" id="saveH">🚀 Submit for Verification</button>
+      <!-- ── Find Charger ── -->
+      <section id="t_find" class="fade-up">
+        <div class="card">
+          <h3>Find a Charger</h3>
+          <p class="subtitle">We'll find hosts you can safely reach with your current battery.</p>
+          <label>Select Vehicle</label>
+          <select id="fv"></select>
+          <label>Battery remaining: <b id="socv" style="color:var(--g2)">10</b>%</label>
+          <input id="soc" type="range" min="1" max="100" value="10">
+          <label class="inline"><input type="checkbox" id="ac"> AC is on</label>
+          <label>Distance to destination (optional)</label>
+          <input id="dest" type="number" min="0" placeholder="km to your destination">
+          <button class="btn btn-primary btn-block" id="btnFind">⚡ Find chargers I can reach</button>
+        </div>
+        <div id="map"></div>
+        <p id="range" style="color:var(--t2);font-size:0.9rem;margin-bottom:12px;"></p>
+        <div id="res"></div>
+      </section>
+
+      <!-- ── My Vehicles ── -->
+      <section id="t_vehicles" class="hide fade-up">
+        <div class="card">
+          <h3>Add a Vehicle</h3>
+          <p class="subtitle">Add your EV so we can calculate your real range accurately.</p>
+          <label>Nickname</label>
+          <input id="nick" placeholder="e.g. My Nexon EV" maxlength="40">
+          <label>Model</label>
+          <select id="cat"></select>
+          <label>Vehicle Type</label>
+          <select id="vtype">
+            <option>2W</option>
+            <option>3W</option>
+            <option selected>4W</option>
+          </select>
+          <div class="row">
+            <div><label>Battery kWh</label><input id="kwh" type="number" step="0.1" placeholder="30.2"></div>
+            <div><label>Wh per km</label><input id="whkm" type="number" placeholder="150"></div>
+            <div><label>Health %</label><input id="hp" type="number" value="100" placeholder="100"></div>
+          </div>
+          <label style="margin-bottom:10px;">Connectors</label>
+          <div>
+            <label class="inline"><input type="checkbox" class="cn" value="socket15A"> 15A Socket</label>
+            <label class="inline"><input type="checkbox" class="cn" value="type2"> Type 2</label>
+            <label class="inline"><input type="checkbox" class="cn" value="ccs2"> CCS2</label>
+          </div><br>
+          <button class="btn btn-primary btn-block" id="saveV">💾 Save Vehicle</button>
+        </div>
+        <div id="vlist"></div>
+      </section>
+
+      <div class="switch-role-btn">
+        <button id="switchToHost">🔌 Switch to Charging Point Owner view →</button>
+      </div>
     </div>
-  </section>
 
-  <!-- ── My Stations ── -->
-  <section id="t_myStations" class="hide fade-up">
-    <div class="card">
-      <h3>Your Registered Stations</h3>
-      <p class="subtitle">Track the status of your registered charging points. Verified stations are visible to EV owners.</p>
+    <!-- ═══════════════ CHARGING POINT OWNER APP ═══════════════ -->
+    <div id="hostApp" class="hide">
+      <div class="tabs" id="hostTabs">
+        <button data-t="register" class="active">➕ Register Station</button>
+        <button data-t="myStations">📋 My Stations</button>
+      </div>
+
+      <!-- ── Register Station ── -->
+      <section id="t_register" class="fade-up">
+        <div class="card">
+          <h3>Register Your Charging Point</h3>
+          <p class="subtitle">Your listing will be reviewed and verified by our team before it goes live. Only verified
+            stations appear to EV owners searching for chargers.</p>
+
+          <label>Station / Place Name</label>
+          <input id="hname" placeholder="e.g. Shree Residency Garage" maxlength="60">
+
+          <label>Full Address <span style="color:var(--t3);font-weight:400;">(shown only after booking)</span></label>
+          <input id="haddr" placeholder="e.g. Plot 14, Lane 3, Baner, Pune 411045">
+
+          <div class="row">
+            <div><label>Charger Power (kW)</label><input id="hkw" type="number" step="0.1" placeholder="3.3"></div>
+            <div><label>Price (₹/kWh)</label><input id="hprice" type="number" placeholder="12"></div>
+          </div>
+
+          <label style="margin-bottom:10px;">Available Connectors</label>
+          <div>
+            <label class="inline"><input type="checkbox" class="hn" value="socket15A"> 15A Socket</label>
+            <label class="inline"><input type="checkbox" class="hn" value="type2"> Type 2</label>
+            <label class="inline"><input type="checkbox" class="hn" value="ccs2"> CCS2</label>
+          </div>
+
+          <label>Amenities <span style="color:var(--t3);font-weight:400;">(comma separated)</span></label>
+          <input id="hamen" placeholder="seating, tea, restroom, parking, wifi">
+
+          <label>Station Location</label>
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;">
+            <button class="btn btn-secondary" id="hloc" type="button">📍 Use My Current Location</button>
+            <span id="hlocv" style="color:var(--g2);font-size:0.85rem;"></span>
+          </div>
+
+          <!-- ═══ VERIFICATION DOCUMENTS ═══ -->
+          <div class="verify-section">
+            <div class="verify-title">📋 Verification Documents <span
+                style="font-size:0.75rem;font-weight:500;color:var(--t3);">(required)</span></div>
+            <div class="verify-subtitle">Our team reviews these before your station goes live. All documents are stored
+              securely and never shared publicly.</div>
+
+            <!-- 1. Ownership / Permission -->
+            <div style="margin-bottom:18px;">
+              <label style="margin-bottom:10px;font-size:0.9rem;font-weight:600;color:var(--t);">1️⃣ Ownership or
+                Permission</label>
+              <p style="font-size:0.8rem;color:var(--t3);margin-bottom:10px;">Select how you can offer this place:</p>
+
+              <div class="owner-type-grid" id="ownerTypeGrid">
+                <button class="owner-type-btn" id="ot_home" type="button" onclick="selectOwnerType('home')">🏠<br>Home
+                  Owner</button>
+                <button class="owner-type-btn" id="ot_tenant" type="button"
+                  onclick="selectOwnerType('tenant')">🔑<br>Tenant</button>
+                <button class="owner-type-btn" id="ot_shop" type="button" onclick="selectOwnerType('shop')">🏪<br>Shop /
+                  Business</button>
+              </div>
+
+              <div id="docGuide_home" class="doc-guide hide">
+                <strong>🏠 Home Owner — Upload any one:</strong>
+                <ul>
+                  <li>Recent electricity bill (address + name visible)</li>
+                  <li>Property tax receipt showing same address and name</li>
+                </ul>
+                <div class="doc-match-note">⚠ The name on the document must match your Google account / ID, and the
+                  address must match the pinned location.</div>
+              </div>
+
+              <div id="docGuide_tenant" class="doc-guide hide">
+                <strong>🔑 Tenant — Upload both:</strong>
+                <ul>
+                  <li>Rent agreement (showing your name and the address)</li>
+                  <li>Written consent letter from the landlord</li>
+                </ul>
+                <div class="doc-match-note">⚠ The name on the document must match your Google account / ID, and the
+                  address must match the pinned location.</div>
+              </div>
+
+              <div id="docGuide_shop" class="doc-guide hide">
+                <strong>🏪 Shop / Business — Upload any one:</strong>
+                <ul>
+                  <li>Shop licence</li>
+                  <li>GST registration certificate</li>
+                  <li>Udyam registration certificate</li>
+                  <li>Signboard photo clearly showing the business name and address</li>
+                </ul>
+                <div class="doc-match-note">⚠ The name on the document must match your Google account / ID, and the
+                  address must match the pinned location.</div>
+              </div>
+
+              <div id="ownershipUploadArea" class="hide">
+                <label style="margin-bottom:6px;">Upload document(s)</label>
+                <div class="upload-zone" id="ownershipZone">
+                  <input type="file" id="ownershipFile" accept="image/*,application/pdf" multiple>
+                  <div class="uz-icon">📄</div>
+                  <div class="uz-label">Tap to select file or drag &amp; drop</div>
+                  <div class="uz-sub">JPG, PNG or PDF · Max 5 MB each</div>
+                </div>
+                <div id="ownershipPreviews"></div>
+              </div>
+            </div>
+
+            <!-- 2. Location Photo -->
+            <div>
+              <label style="margin-bottom:6px;font-size:0.9rem;font-weight:600;color:var(--t);">2️⃣ Location Photo <span
+                  style="font-size:0.75rem;font-weight:500;color:var(--t3);">(taken inside the app)</span></label>
+              <p style="font-size:0.8rem;color:var(--t3);margin-bottom:10px;line-height:1.5;">
+                Take a photo from inside the app — gallery uploads are not accepted. The photo's GPS must be within <b
+                  style="color:var(--warn);">50 m</b> of your pinned station location.
+              </p>
+
+              <div id="camGpsBadge" class="cam-gps-badge idle">📡 Pin your location first, then open camera</div>
+
+              <div class="camera-box" id="cameraBox">
+                <video id="camVideo" autoplay playsinline style="display:none;"></video>
+                <canvas id="camCanvas" style="display:none;"></canvas>
+                <div class="cam-placeholder" id="camPlaceholder">📷 Camera preview will appear here</div>
+              </div>
+
+              <div class="cam-actions">
+                <button class="btn btn-secondary" id="btnOpenCam" type="button">📷 Open Camera</button>
+                <button class="btn btn-primary hide" id="btnSnap" type="button">📸 Take Photo</button>
+                <button class="btn btn-secondary hide" id="btnRetake" type="button">🔄 Retake</button>
+              </div>
+
+              <div id="locationPhotoPreview" class="hide"></div>
+            </div>
+          </div>
+          <!-- ═══ END VERIFICATION DOCUMENTS ═══ -->
+
+          <div class="safety-box">
+            <label class="inline" style="margin-bottom:0;">
+              <input type="checkbox" id="hsafe">
+              I confirm earthing, MCB/RCCB and a weatherproof socket are in place, and I accept the host agreement.
+            </label>
+          </div>
+
+          <button class="btn btn-primary btn-block" id="saveH">🚀 Submit for Verification</button>
+        </div>
+      </section>
+
+      <!-- ── My Stations ── -->
+      <section id="t_myStations" class="hide fade-up">
+        <div class="card">
+          <h3>Your Registered Stations</h3>
+          <p class="subtitle">Track the status of your registered charging points. Verified stations are visible to EV
+            owners.</p>
+        </div>
+        <div id="hostList"></div>
+      </section>
+
+      <div class="switch-role-btn">
+        <button id="switchToEV">🚗 Switch to EV Owner view →</button>
+      </div>
     </div>
-    <div id="hostList"></div>
-  </section>
 
-  <div class="switch-role-btn">
-    <button id="switchToEV">🚗 Switch to EV Owner view →</button>
-  </div>
-</div>
+  </main>
 
-</main>
+  <!-- ═══════════════ SCRIPTS ═══════════════ -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, addDoc, setDoc, doc, getDocs, getDoc, deleteDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-<!-- ═══════════════ SCRIPTS ═══════════════ -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, addDoc, setDoc, doc, getDocs, getDoc, deleteDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    // ====== CONFIG ======
+    const CONFIG = {
+      apiKey: "AIzaSyBYlSCay4cs10KQLTdMQeLdv-WAKCff5oI",
+      authDomain: "nearby-7702b.firebaseapp.com",
+      databaseURL: "https://nearby-7702b-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "nearby-7702b",
+      storageBucket: "nearby-7702b.firebasestorage.app",
+      messagingSenderId: "1035497772695",
+      appId: "1:1035497772695:web:8431bac77ee4a2ae843bd2",
+      measurementId: "G-3FFY8Z3KXH"
+    };
+    const BACKEND = "http://localhost:8000";
+    const MAPS_KEY = "AIzaSyARrrfdGCrfz3flqd8-4qqHmfTs1uyPfeU";
 
-// ====== CONFIG ======
-const CONFIG = {
-  apiKey: "AIzaSyBYlSCay4cs10KQLTdMQeLdv-WAKCff5oI",
-  authDomain: "nearby-7702b.firebaseapp.com",
-  databaseURL: "https://nearby-7702b-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "nearby-7702b",
-  storageBucket: "nearby-7702b.firebasestorage.app",
-  messagingSenderId: "1035497772695",
-  appId: "1:1035497772695:web:8431bac77ee4a2ae843bd2",
-  measurementId: "G-3FFY8Z3KXH"
-};
-const BACKEND = "http://localhost:8000";
-const MAPS_KEY = "AIzaSyARrrfdGCrfz3flqd8-4qqHmfTs1uyPfeU";
+    // Sample values: verify against manufacturer specs and disclose as assumptions.
+    const CATALOG = [
+      { n: "Tata Nexon EV", t: "4W", kwh: 30.2, wh: 150, c: ["ccs2", "type2"] },
+      { n: "Tata Tiago EV", t: "4W", kwh: 24, wh: 120, c: ["ccs2", "type2"] },
+      { n: "MG ZS EV", t: "4W", kwh: 50.3, wh: 165, c: ["ccs2", "type2"] },
+      { n: "Ather 450X", t: "2W", kwh: 3.7, wh: 30, c: ["socket15A"] },
+      { n: "Ola S1 Pro", t: "2W", kwh: 4, wh: 33, c: ["socket15A"] },
+      { n: "Bajaj Chetak", t: "2W", kwh: 3, wh: 30, c: ["socket15A"] }
+    ];
 
-// Sample values: verify against manufacturer specs and disclose as assumptions.
-const CATALOG = [
-  { n: "Tata Nexon EV", t: "4W", kwh: 30.2, wh: 150, c: ["ccs2", "type2"] },
-  { n: "Tata Tiago EV", t: "4W", kwh: 24, wh: 120, c: ["ccs2", "type2"] },
-  { n: "MG ZS EV", t: "4W", kwh: 50.3, wh: 165, c: ["ccs2", "type2"] },
-  { n: "Ather 450X", t: "2W", kwh: 3.7, wh: 30, c: ["socket15A"] },
-  { n: "Ola S1 Pro", t: "2W", kwh: 4, wh: 33, c: ["socket15A"] },
-  { n: "Bajaj Chetak", t: "2W", kwh: 3, wh: 30, c: ["socket15A"] }
-];
-
-// ── Helpers ──
-const $ = id => document.getElementById(id);
-const app = initializeApp(CONFIG);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const el = (tag, txt, cls) => { const e = document.createElement(tag); if (txt != null) e.textContent = txt; if (cls) e.className = cls; return e; };
-const ticked = c => [...document.querySelectorAll("." + c + ":checked")].map(x => x.value);
-
-let map, markers = [], hostPos = null;
-let currentRole = null; // 'ev' or 'host'
-
-// ═══════════════ AUTH ═══════════════
-$("btnLogin").onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
-$("btnOut").onclick = () => { signOut(auth); currentRole = null; };
-
-onAuthStateChanged(auth, async u => {
-  console.log("Auth state changed:", u ? u.email : "Signed out");
-  $("login").classList.toggle("hide", !!u);
-  $("userBar").classList.toggle("hide", !u);
-
-  // Reset all views
-  $("roleSelect").classList.add("hide");
-  $("evApp").classList.add("hide");
-  $("hostApp").classList.add("hide");
-
-  if (u) {
-    // Set user info in header
-    $("userName").textContent = u.displayName ? u.displayName.split(" ")[0] : (u.email ? u.email.split("@")[0] : "User");
-    if (u.photoURL) { $("userPhoto").src = u.photoURL; $("userPhoto").style.display = "block"; }
-    else { $("userPhoto").style.display = "none"; }
-
-    try {
-      // Check if user has a saved role
-      const userDoc = await getDoc(doc(db, "users", u.uid));
-      if (userDoc.exists() && userDoc.data().role) {
-        currentRole = userDoc.data().role;
-        activateRole(currentRole);
-      } else {
-        // Show role selection screen
-        $("roleSelect").classList.remove("hide");
+    // ═══════════════ ERROR MONITOR ═══════════════
+    window.addEventListener("error", e => {
+      console.error("Global JS Error:", e);
+      const b = $("debugBanner");
+      if (b) {
+        b.style.display = "block";
+        b.textContent = "⚠ Page Error: " + (e.message || e.error);
       }
-    } catch (err) {
-      console.warn("Could not fetch user role from Firestore, defaulting to role selection:", err);
-      // Fallback: If Firestore query fails (e.g. offline, permissions, network), show role selection
-      $("roleSelect").classList.remove("hide");
-    }
-  }
-});
-
-// ═══════════════ ROLE SELECTION ═══════════════
-$("roleEV").onclick = () => selectRole("ev");
-$("roleHost").onclick = () => selectRole("host");
-
-async function selectRole(role) {
-  currentRole = role;
-  $("roleSelect").classList.add("hide");
-  activateRole(role);
-  try {
-    // Save role to Firestore in the background
-    await setDoc(doc(db, "users", auth.currentUser.uid), { role, updatedAt: serverTimestamp() }, { merge: true });
-  } catch (err) {
-    console.warn("Could not save role to Firestore:", err);
-  }
-}
-
-function activateRole(role) {
-  if (role === "ev") {
-    $("evApp").classList.remove("hide");
-    $("hostApp").classList.add("hide");
-    loadVehicles();
-    showEvTab("find");
-  } else {
-    $("hostApp").classList.remove("hide");
-    $("evApp").classList.add("hide");
-    loadHostStations();
-    showHostTab("register");
-  }
-}
-
-// Switch role buttons
-$("switchToHost").onclick = () => selectRole("host");
-$("switchToEV").onclick = () => selectRole("ev");
-
-// ═══════════════ EV OWNER TABS ═══════════════
-function showEvTab(t) {
-  ["find", "vehicles"].forEach(x => {
-    const sec = $("t_" + x);
-    if (sec) sec.classList.toggle("hide", x !== t);
-  });
-  $("evTabs").querySelectorAll("button").forEach(b => {
-    b.classList.toggle("active", b.dataset.t === t);
-  });
-}
-$("evTabs").querySelectorAll("button").forEach(b => {
-  b.onclick = () => showEvTab(b.dataset.t);
-});
-
-// ═══════════════ HOST OWNER TABS ═══════════════
-function showHostTab(t) {
-  ["register", "myStations"].forEach(x => {
-    const sec = $("t_" + x);
-    if (sec) sec.classList.toggle("hide", x !== t);
-  });
-  $("hostTabs").querySelectorAll("button").forEach(b => {
-    b.classList.toggle("active", b.dataset.t === t);
-  });
-}
-$("hostTabs").querySelectorAll("button").forEach(b => {
-  b.onclick = () => {
-    showHostTab(b.dataset.t);
-    if (b.dataset.t === "myStations") loadHostStations();
-  };
-});
-
-// ═══════════════ VEHICLE MANAGEMENT ═══════════════
-CATALOG.forEach((c, i) => $("cat").add(new Option(c.n, i)));
-$("cat").add(new Option("Other / custom", "x"));
-
-function fillCat() {
-  const c = CATALOG[$("cat").value];
-  if (!c) return;
-  $("vtype").value = c.t;
-  $("kwh").value = c.kwh;
-  $("whkm").value = c.wh;
-  document.querySelectorAll(".cn").forEach(x => x.checked = c.c.includes(x.value));
-}
-$("cat").onchange = fillCat;
-fillCat();
-
-$("saveV").onclick = async () => {
-  const kwh = +$("kwh").value, wh = +$("whkm").value, hp = +$("hp").value, cn = ticked("cn");
-  if (!(kwh > 0 && wh > 0 && hp > 0 && hp <= 100 && cn.length)) return alert("Fill battery kWh, Wh/km, health (1-100) and pick a connector");
-  const c = CATALOG[$("cat").value];
-  await addDoc(collection(db, "users", auth.currentUser.uid, "vehicles"), {
-    nickname: $("nick").value.trim() || (c ? c.n : "My EV"),
-    model: c ? c.n : "Custom", type: $("vtype").value,
-    batteryKwh: kwh, whPerKm: wh, healthPct: hp,
-    connectors: cn, createdAt: serverTimestamp()
-  });
-  $("nick").value = "";
-  await loadVehicles();
-};
-
-async function loadVehicles() {
-  const snap = await getDocs(collection(db, "users", auth.currentUser.uid, "vehicles"));
-  $("fv").replaceChildren();
-  $("vlist").replaceChildren();
-  snap.forEach(d => {
-    const v = d.data();
-    $("fv").add(new Option(v.nickname, d.id));
-    const c = el("div", null, "card");
-    const info = el("div", null, "");
-    info.append(el("b", v.nickname));
-    info.append(el("div", `${v.model} · ${v.type} · ${v.batteryKwh} kWh · ${v.whPerKm} Wh/km · ${v.connectors.join(", ")}`, "subtitle"));
-    c.append(info);
-    const b = el("button", "✕ Remove", "btn btn-danger btn-sm");
-    b.onclick = async () => { await deleteDoc(doc(db, "users", auth.currentUser.uid, "vehicles", d.id)); loadVehicles(); };
-    c.append(b);
-    $("vlist").append(c);
-  });
-  if (snap.empty) {
-    const p = el("div", null, "card");
-    p.innerHTML = '<p style="color:var(--t2);text-align:center;">No vehicles yet. Add one above to use the charger finder.</p>';
-    $("vlist").append(p);
-  }
-}
-
-// ═══════════════ FIND CHARGERS ═══════════════
-$("soc").oninput = () => $("socv").textContent = $("soc").value;
-
-window.initMap = () => { map = new google.maps.Map($("map"), { center: { lat: 18.6298, lng: 73.7997 }, zoom: 12, styles: [
-  { elementType: "geometry", stylers: [{ color: "#1d2c4d" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#8ec3b9" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#1a3646" }] },
-  { featureType: "road", elementType: "geometry", stylers: [{ color: "#304a7d" }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: "#0e1626" }] }
-] }); };
-const ms = document.createElement("script");
-ms.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&callback=initMap`;
-document.head.append(ms);
-
-$("btnFind").onclick = async () => {
-  if (!$("fv").value) return alert("Add a vehicle first");
-  $("btnFind").disabled = true;
-  $("range").textContent = "⏳ Finding chargers you can safely reach...";
-  try {
-    const p = await new Promise((ok, no) => navigator.geolocation.getCurrentPosition(x => ok(x.coords), no, { enableHighAccuracy: true, timeout: 10000 }));
-    const token = await auth.currentUser.getIdToken();
-    const r = await fetch(BACKEND + "/recommend", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-      body: JSON.stringify({ lat: p.latitude, lng: p.longitude, soc: +$("soc").value, vehicleId: $("fv").value, ac_on: $("ac").checked, dest_km: $("dest").value ? +$("dest").value : null })
     });
-    if (!r.ok) throw new Error("Server error " + r.status);
-    render(await r.json(), p);
-  } catch (e) { $("range").textContent = "⚠ Could not complete the search: " + e.message; }
-  $("btnFind").disabled = false;
-};
 
-function render(d, p) {
-  $("range").textContent = `⚡ Safe range ${d.rangeKm.safe} km (likely ${d.rangeKm.low} to ${d.rangeKm.high} km)`;
-  const L = $("res"); L.replaceChildren();
-  markers.forEach(m => m.setMap(null)); markers = [];
-  if (map) {
-    map.setCenter({ lat: p.latitude, lng: p.longitude });
-    markers.push(new google.maps.Marker({ map, position: { lat: p.latitude, lng: p.longitude }, title: "You" }));
-  }
-  if (!d.hosts.length) { L.append(el("div", d.fallback, "card")); return; }
-  d.hosts.forEach((h, i) => {
-    if (map) markers.push(new google.maps.Marker({ map, position: { lat: h.approxLat, lng: h.approxLng }, label: String(i + 1), title: h.name }));
-    const c = el("div", null, "card result-card");
-    const rank = el("div", i + 1, "rank");
-    c.append(rank);
-    c.append(el("div", h.name, "name"));
-    let detail = `${h.distKm} km away · ${h.kw} kW · ⭐ ${h.rating} · match ${Math.round(h.score * 100)}%`;
-    if (h.minutesNeeded != null) detail += ` · ~${h.minutesNeeded} min charge`;
-    c.append(el("div", detail, "detail"));
-    const a = el("a", "📍 Navigate →");
-    a.href = `https://www.google.com/maps/dir/?api=1&destination=${h.approxLat},${h.approxLng}`;
-    a.target = "_blank"; a.rel = "noopener";
-    c.append(a);
-    L.append(c);
-  });
-}
+    // ── Helpers ──
+    const $ = id => document.getElementById(id);
+    const app = initializeApp(CONFIG);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const el = (tag, txt, cls) => { const e = document.createElement(tag); if (txt != null) e.textContent = txt; if (cls) e.className = cls; return e; };
+    const ticked = c => [...document.querySelectorAll("." + c + ":checked")].map(x => x.value);
 
-// ═══════════════ HOST REGISTRATION ═══════════════
-$("hloc").onclick = () => navigator.geolocation.getCurrentPosition(
-  x => {
-    hostPos = x.coords;
-    $("hlocv").textContent = `✅ Captured (${x.coords.latitude.toFixed(4)}, ${x.coords.longitude.toFixed(4)})`;
-    updateCamGpsBadge(); // refresh GPS badge now that pin is set
-  },
-  () => alert("Location permission needed")
-);
+    let map, markers = [], hostPos = null;
+    let currentRole = null; // 'ev' or 'host'
 
-// ─── Verification state ───
-let ownerType = null;          // 'home' | 'tenant' | 'shop'
-let ownershipFiles = [];       // FileList items
-let locationPhotoBlob = null;  // Captured in-app photo blob
-let locationPhotoGpsOk = false;
-let camStream = null;
+    // ═══════════════ AUTH ═══════════════
+    $("btnLogin").onclick = async () => {
+      try {
+        await signInWithPopup(auth, new GoogleAuthProvider());
+      } catch (err) {
+        console.error("Sign-in error:", err);
+        alert("Sign-in error: " + err.message);
+      }
+    };
+    $("btnOut").onclick = () => { signOut(auth); currentRole = null; };
 
-// ── Haversine distance (metres) ──
-function haversineM(lat1, lng1, lat2, lng2) {
-  const R = 6371000, toR = d => d * Math.PI / 180;
-  const dLat = toR(lat2 - lat1), dLng = toR(lng2 - lng1);
-  const a = Math.sin(dLat/2)**2 + Math.cos(toR(lat1)) * Math.cos(toR(lat2)) * Math.sin(dLng/2)**2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
+    onAuthStateChanged(auth, async u => {
+      console.log("Auth state changed:", u ? u.email : "Signed out");
+      const loginEl = $("login");
+      const userBarEl = $("userBar");
+      if (loginEl) loginEl.classList.toggle("hide", !!u);
+      if (userBarEl) userBarEl.classList.toggle("hide", !u);
 
-// ── Owner-type selection ──
-window.selectOwnerType = function(type) {
-  ownerType = type;
-  ['home','tenant','shop'].forEach(t => {
-    $("ot_" + t).classList.toggle("selected", t === type);
-    $("docGuide_" + t).classList.toggle("hide", t !== type);
-  });
-  $("ownershipUploadArea").classList.remove("hide");
-};
+      // Reset all views
+      $("roleSelect")?.classList.add("hide");
+      $("evApp")?.classList.add("hide");
+      $("hostApp")?.classList.add("hide");
 
-// ── File upload handling ──
-$("ownershipFile").onchange = function() {
-  const newFiles = [...this.files];
-  const allowed = ['image/jpeg','image/png','image/webp','application/pdf'];
-  const valid = newFiles.filter(f => allowed.includes(f.type) && f.size <= 5 * 1024 * 1024);
-  const rejected = newFiles.length - valid.length;
-  if (rejected) alert(`${rejected} file(s) skipped: only JPG, PNG, WebP or PDF up to 5 MB each.`);
-  ownershipFiles = [...ownershipFiles, ...valid];
-  renderOwnershipPreviews();
-};
+      if (u) {
+        // Set user info in header
+        $("userName").textContent = u.displayName ? u.displayName.split(" ")[0] : (u.email ? u.email.split("@")[0] : "User");
+        if (u.photoURL) { $("userPhoto").src = u.photoURL; $("userPhoto").style.display = "block"; }
+        else { $("userPhoto").style.display = "none"; }
 
-// Drag-and-drop
-const ozEl = $("ownershipZone");
-ozEl.addEventListener("dragover", e => { e.preventDefault(); ozEl.classList.add("drag-over"); });
-ozEl.addEventListener("dragleave", () => ozEl.classList.remove("drag-over"));
-ozEl.addEventListener("drop", e => {
-  e.preventDefault(); ozEl.classList.remove("drag-over");
-  const dt = e.dataTransfer;
-  if (dt && dt.files.length) { $("ownershipFile").files = dt.files; $("ownershipFile").onchange.call($("ownershipFile")); }
-});
+        // 1. Instant check: check localStorage role first for zero-delay display
+        const cachedRole = localStorage.getItem("chargenear_role_" + u.uid);
+        if (cachedRole === "ev" || cachedRole === "host") {
+          currentRole = cachedRole;
+          activateRole(cachedRole);
+        } else {
+          // Immediately show roleSelect as default so screen is never blank!
+          $("roleSelect")?.classList.remove("hide");
+        }
 
-function renderOwnershipPreviews() {
-  const area = $("ownershipPreviews");
-  area.replaceChildren();
-  ownershipFiles.forEach((f, i) => {
-    const row = document.createElement("div");
-    row.className = "upload-preview";
-    if (f.type.startsWith("image/")) {
-      const img = document.createElement("img");
-      img.src = URL.createObjectURL(f);
-      row.append(img);
-    } else {
-      const ic = document.createElement("span");
-      ic.textContent = "📄";
-      ic.style.fontSize = "2rem";
-      row.append(ic);
+        // 2. Background Firestore check with 3s timeout
+        try {
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 3000));
+          const userDoc = await Promise.race([
+            getDoc(doc(db, "users", u.uid)),
+            timeoutPromise
+          ]);
+          if (userDoc && userDoc.exists() && userDoc.data().role) {
+            const role = userDoc.data().role;
+            localStorage.setItem("chargenear_role_" + u.uid, role);
+            if (currentRole !== role) {
+              currentRole = role;
+              $("roleSelect")?.classList.add("hide");
+              activateRole(role);
+            }
+          }
+        } catch (err) {
+          console.warn("Firestore user role check (using fallback/cached):", err.message);
+        }
+      } else {
+        // When not logged in, ensure login hero is explicitly visible
+        $("login")?.classList.remove("hide");
+      }
+    });
+
+    // ═══════════════ ROLE SELECTION ═══════════════
+    $("roleEV").onclick = () => selectRole("ev");
+    $("roleHost").onclick = () => selectRole("host");
+
+    async function selectRole(role) {
+      currentRole = role;
+      if (auth.currentUser) localStorage.setItem("chargenear_role_" + auth.currentUser.uid, role);
+      $("roleSelect")?.classList.add("hide");
+      activateRole(role);
+      try {
+        await setDoc(doc(db, "users", auth.currentUser.uid), { role, updatedAt: serverTimestamp() }, { merge: true });
+      } catch (err) {
+        console.warn("Could not save role to Firestore:", err);
+      }
     }
-    const nm = document.createElement("span");
-    nm.className = "up-name";
-    nm.textContent = f.name + " (" + (f.size/1024).toFixed(0) + " KB)";
-    const rm = document.createElement("button");
-    rm.className = "up-remove";
-    rm.textContent = "✕";
-    rm.type = "button";
-    rm.onclick = () => { ownershipFiles.splice(i, 1); renderOwnershipPreviews(); };
-    row.append(nm, rm);
-    area.append(row);
-  });
-}
 
-// ── Camera capture ──
-function updateCamGpsBadge() {
-  const badge = $("camGpsBadge");
-  if (!hostPos) {
-    badge.textContent = "📡 Pin your location first, then open camera";
-    badge.className = "cam-gps-badge idle";
-    return;
-  }
-  if (locationPhotoBlob && locationPhotoGpsOk) {
-    badge.textContent = "✅ GPS verified — photo is within 50 m of pinned location";
-    badge.className = "cam-gps-badge ok";
-  } else if (locationPhotoBlob && !locationPhotoGpsOk) {
-    badge.textContent = "❌ GPS mismatch — photo taken > 50 m from pinned location";
-    badge.className = "cam-gps-badge fail";
-  } else {
-    badge.textContent = "📍 Location pinned. Open camera to take a photo from this spot.";
-    badge.className = "cam-gps-badge ok";
-  }
-}
+    function activateRole(role) {
+      if (role === "ev") {
+        $("evApp")?.classList.remove("hide");
+        $("hostApp")?.classList.add("hide");
+        loadVehicles().catch(e => console.warn("loadVehicles error:", e));
+        showEvTab("find");
+      } else {
+        $("hostApp")?.classList.remove("hide");
+        $("evApp")?.classList.add("hide");
+        loadHostStations().catch(e => console.warn("loadHostStations error:", e));
+        showHostTab("register");
+      }
+    }
 
-$("btnOpenCam").onclick = async () => {
-  if (!hostPos) return alert("Please capture your station location first using 📍 Use My Current Location.");
-  try {
-    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
-    const vid = $("camVideo");
-    vid.srcObject = camStream;
-    vid.style.display = "block";
-    $("camPlaceholder").style.display = "none";
-    $("camCanvas").style.display = "none";
-    $("btnOpenCam").classList.add("hide");
-    $("btnSnap").classList.remove("hide");
-    $("btnRetake").classList.add("hide");
-    locationPhotoBlob = null; locationPhotoGpsOk = false;
-    updateCamGpsBadge();
-  } catch(e) { alert("Camera error: " + e.message); }
-};
+    // Switch role buttons
+    $("switchToHost").onclick = () => selectRole("host");
+    $("switchToEV").onclick = () => selectRole("ev");
 
-$("btnSnap").onclick = () => {
-  // Get current GPS for the photo
-  navigator.geolocation.getCurrentPosition(gp => {
-    const vid = $("camVideo"), canvas = $("camCanvas");
-    canvas.width = vid.videoWidth; canvas.height = vid.videoHeight;
-    canvas.getContext("2d").drawImage(vid, 0, 0);
-    canvas.toBlob(blob => {
-      locationPhotoBlob = blob;
-      // Stop stream
-      if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
-      vid.style.display = "none";
-      canvas.style.display = "block";
-      $("btnSnap").classList.add("hide");
-      $("btnOpenCam").classList.add("hide");
-      $("btnRetake").classList.remove("hide");
+    // ═══════════════ EV OWNER TABS ═══════════════
+    function showEvTab(t) {
+      ["find", "vehicles"].forEach(x => {
+        const sec = $("t_" + x);
+        if (sec) sec.classList.toggle("hide", x !== t);
+      });
+      $("evTabs")?.querySelectorAll("button").forEach(b => {
+        b.classList.toggle("active", b.dataset.t === t);
+      });
+    }
+    $("evTabs")?.querySelectorAll("button").forEach(b => {
+      b.onclick = () => showEvTab(b.dataset.t);
+    });
 
-      // GPS proximity check
-      const dist = haversineM(gp.coords.latitude, gp.coords.longitude, hostPos.latitude, hostPos.longitude);
-      locationPhotoGpsOk = dist <= 50;
+    // ═══════════════ HOST OWNER TABS ═══════════════
+    function showHostTab(t) {
+      ["register", "myStations"].forEach(x => {
+        const sec = $("t_" + x);
+        if (sec) sec.classList.toggle("hide", x !== t);
+      });
+      $("hostTabs")?.querySelectorAll("button").forEach(b => {
+        b.classList.toggle("active", b.dataset.t === t);
+      });
+    }
+    $("hostTabs")?.querySelectorAll("button").forEach(b => {
+      b.onclick = () => {
+        showHostTab(b.dataset.t);
+        if (b.dataset.t === "myStations") loadHostStations().catch(e => console.warn(e));
+      };
+    });
+
+    // ═══════════════ VEHICLE MANAGEMENT ═══════════════
+    if ($("cat")) {
+      CATALOG.forEach((c, i) => $("cat").add(new Option(c.n, i)));
+      $("cat").add(new Option("Other / custom", "x"));
+      $("cat").onchange = fillCat;
+      fillCat();
+    }
+
+    function fillCat() {
+      const catEl = $("cat");
+      if (!catEl) return;
+      const c = CATALOG[catEl.value];
+      if (!c) return;
+      if ($("vtype")) $("vtype").value = c.t;
+      if ($("kwh")) $("kwh").value = c.kwh;
+      if ($("whkm")) $("whkm").value = c.wh;
+      document.querySelectorAll(".cn").forEach(x => x.checked = c.c.includes(x.value));
+    }
+
+    $("saveV").onclick = async () => {
+      const kwh = +$("kwh").value, wh = +$("whkm").value, hp = +$("hp").value, cn = ticked("cn");
+      if (!(kwh > 0 && wh > 0 && hp > 0 && hp <= 100 && cn.length)) return alert("Fill battery kWh, Wh/km, health (1-100) and pick a connector");
+      const c = CATALOG[$("cat").value];
+      await addDoc(collection(db, "users", auth.currentUser.uid, "vehicles"), {
+        nickname: $("nick").value.trim() || (c ? c.n : "My EV"),
+        model: c ? c.n : "Custom", type: $("vtype").value,
+        batteryKwh: kwh, whPerKm: wh, healthPct: hp,
+        connectors: cn, createdAt: serverTimestamp()
+      });
+      $("nick").value = "";
+      await loadVehicles();
+    };
+
+    async function loadVehicles() {
+      try {
+        const snap = await getDocs(collection(db, "users", auth.currentUser.uid, "vehicles"));
+        $("fv").replaceChildren();
+        $("vlist").replaceChildren();
+        snap.forEach(d => {
+          const v = d.data();
+          $("fv").add(new Option(v.nickname, d.id));
+          const c = el("div", null, "card");
+          const info = el("div", null, "");
+          info.append(el("b", v.nickname));
+          info.append(el("div", `${v.model} · ${v.type} · ${v.batteryKwh} kWh · ${v.whPerKm} Wh/km · ${v.connectors.join(", ")}`, "subtitle"));
+          c.append(info);
+          const b = el("button", "✕ Remove", "btn btn-danger btn-sm");
+          b.onclick = async () => { await deleteDoc(doc(db, "users", auth.currentUser.uid, "vehicles", d.id)); loadVehicles(); };
+          c.append(b);
+          $("vlist").append(c);
+        });
+        if (snap.empty) {
+          const p = el("div", null, "card");
+          p.innerHTML = '<p style="color:var(--t2);text-align:center;">No vehicles yet. Add one above to use the charger finder.</p>';
+          $("vlist").append(p);
+        }
+      } catch (err) {
+        console.warn("loadVehicles error:", err);
+      }
+    }
+
+    // ═══════════════ FIND CHARGERS ═══════════════
+    if ($("soc")) $("soc").oninput = () => $("socv").textContent = $("soc").value;
+
+    window.initMap = () => {
+      const mapEl = $("map");
+      if (!mapEl) return;
+      map = new google.maps.Map(mapEl, {
+        center: { lat: 18.6298, lng: 73.7997 }, zoom: 12, styles: [
+          { elementType: "geometry", stylers: [{ color: "#1d2c4d" }] },
+          { elementType: "labels.text.fill", stylers: [{ color: "#8ec3b9" }] },
+          { elementType: "labels.text.stroke", stylers: [{ color: "#1a3646" }] },
+          { featureType: "road", elementType: "geometry", stylers: [{ color: "#304a7d" }] },
+          { featureType: "water", elementType: "geometry", stylers: [{ color: "#0e1626" }] }
+        ]
+      });
+    };
+    const ms = document.createElement("script");
+    ms.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&callback=initMap`;
+    document.head.append(ms);
+
+    $("btnFind").onclick = async () => {
+      if (!$("fv").value) return alert("Add a vehicle first");
+      $("btnFind").disabled = true;
+      $("range").textContent = "⏳ Finding chargers you can safely reach...";
+      try {
+        const p = await new Promise((ok, no) => navigator.geolocation.getCurrentPosition(x => ok(x.coords), no, { enableHighAccuracy: true, timeout: 10000 }));
+        const token = await auth.currentUser.getIdToken();
+        const r = await fetch(BACKEND + "/recommend", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify({ lat: p.latitude, lng: p.longitude, soc: +$("soc").value, vehicleId: $("fv").value, ac_on: $("ac").checked, dest_km: $("dest").value ? +$("dest").value : null })
+        });
+        if (!r.ok) throw new Error("Server error " + r.status);
+        render(await r.json(), p);
+      } catch (e) { $("range").textContent = "⚠ Could not complete the search: " + e.message; }
+      $("btnFind").disabled = false;
+    };
+
+    function render(d, p) {
+      $("range").textContent = `⚡ Safe range ${d.rangeKm.safe} km (likely ${d.rangeKm.low} to ${d.rangeKm.high} km)`;
+      const L = $("res"); L.replaceChildren();
+      markers.forEach(m => m.setMap(null)); markers = [];
+      if (map) {
+        map.setCenter({ lat: p.latitude, lng: p.longitude });
+        markers.push(new google.maps.Marker({ map, position: { lat: p.latitude, lng: p.longitude }, title: "You" }));
+      }
+      if (!d.hosts.length) { L.append(el("div", d.fallback, "card")); return; }
+      d.hosts.forEach((h, i) => {
+        if (map) markers.push(new google.maps.Marker({ map, position: { lat: h.approxLat, lng: h.approxLng }, label: String(i + 1), title: h.name }));
+        const c = el("div", null, "card result-card");
+        const rank = el("div", i + 1, "rank");
+        c.append(rank);
+        c.append(el("div", h.name, "name"));
+        let detail = `${h.distKm} km away · ${h.kw} kW · ⭐ ${h.rating} · match ${Math.round(h.score * 100)}%`;
+        if (h.minutesNeeded != null) detail += ` · ~${h.minutesNeeded} min charge`;
+        c.append(el("div", detail, "detail"));
+        const a = el("a", "📍 Navigate →");
+        a.href = `https://www.google.com/maps/dir/?api=1&destination=${h.approxLat},${h.approxLng}`;
+        a.target = "_blank"; a.rel = "noopener";
+        c.append(a);
+        L.append(c);
+      });
+    }
+
+    // ═══════════════ HOST REGISTRATION ═══════════════
+    $("hloc").onclick = () => navigator.geolocation.getCurrentPosition(
+      x => {
+        hostPos = x.coords;
+        $("hlocv").textContent = `✅ Captured (${x.coords.latitude.toFixed(4)}, ${x.coords.longitude.toFixed(4)})`;
+        updateCamGpsBadge(); // refresh GPS badge now that pin is set
+      },
+      () => alert("Location permission needed")
+    );
+
+    // ─── Verification state ───
+    let ownerType = null;          // 'home' | 'tenant' | 'shop'
+    let ownershipFiles = [];       // FileList items
+    let locationPhotoBlob = null;  // Captured in-app photo blob
+    let locationPhotoGpsOk = false;
+    let camStream = null;
+
+    // ── Haversine distance (metres) ──
+    function haversineM(lat1, lng1, lat2, lng2) {
+      const R = 6371000, toR = d => d * Math.PI / 180;
+      const dLat = toR(lat2 - lat1), dLng = toR(lng2 - lng1);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toR(lat1)) * Math.cos(toR(lat2)) * Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    // ── Owner-type selection ──
+    window.selectOwnerType = function (type) {
+      ownerType = type;
+      ['home', 'tenant', 'shop'].forEach(t => {
+        $("ot_" + t).classList.toggle("selected", t === type);
+        $("docGuide_" + t).classList.toggle("hide", t !== type);
+      });
+      $("ownershipUploadArea").classList.remove("hide");
+    };
+
+    // ── File upload handling ──
+    $("ownershipFile").onchange = function () {
+      const newFiles = [...this.files];
+      const allowed = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+      const valid = newFiles.filter(f => allowed.includes(f.type) && f.size <= 5 * 1024 * 1024);
+      const rejected = newFiles.length - valid.length;
+      if (rejected) alert(`${rejected} file(s) skipped: only JPG, PNG, WebP or PDF up to 5 MB each.`);
+      ownershipFiles = [...ownershipFiles, ...valid];
+      renderOwnershipPreviews();
+    };
+
+    // Drag-and-drop
+    const ozEl = $("ownershipZone");
+    ozEl.addEventListener("dragover", e => { e.preventDefault(); ozEl.classList.add("drag-over"); });
+    ozEl.addEventListener("dragleave", () => ozEl.classList.remove("drag-over"));
+    ozEl.addEventListener("drop", e => {
+      e.preventDefault(); ozEl.classList.remove("drag-over");
+      const dt = e.dataTransfer;
+      if (dt && dt.files.length) { $("ownershipFile").files = dt.files; $("ownershipFile").onchange.call($("ownershipFile")); }
+    });
+
+    function renderOwnershipPreviews() {
+      const area = $("ownershipPreviews");
+      area.replaceChildren();
+      ownershipFiles.forEach((f, i) => {
+        const row = document.createElement("div");
+        row.className = "upload-preview";
+        if (f.type.startsWith("image/")) {
+          const img = document.createElement("img");
+          img.src = URL.createObjectURL(f);
+          row.append(img);
+        } else {
+          const ic = document.createElement("span");
+          ic.textContent = "📄";
+          ic.style.fontSize = "2rem";
+          row.append(ic);
+        }
+        const nm = document.createElement("span");
+        nm.className = "up-name";
+        nm.textContent = f.name + " (" + (f.size / 1024).toFixed(0) + " KB)";
+        const rm = document.createElement("button");
+        rm.className = "up-remove";
+        rm.textContent = "✕";
+        rm.type = "button";
+        rm.onclick = () => { ownershipFiles.splice(i, 1); renderOwnershipPreviews(); };
+        row.append(nm, rm);
+        area.append(row);
+      });
+    }
+
+    // ── Camera capture ──
+    function updateCamGpsBadge() {
+      const badge = $("camGpsBadge");
+      if (!hostPos) {
+        badge.textContent = "📡 Pin your location first, then open camera";
+        badge.className = "cam-gps-badge idle";
+        return;
+      }
+      if (locationPhotoBlob && locationPhotoGpsOk) {
+        badge.textContent = "✅ GPS verified — photo is within 50 m of pinned location";
+        badge.className = "cam-gps-badge ok";
+      } else if (locationPhotoBlob && !locationPhotoGpsOk) {
+        badge.textContent = "❌ GPS mismatch — photo taken > 50 m from pinned location";
+        badge.className = "cam-gps-badge fail";
+      } else {
+        badge.textContent = "📍 Location pinned. Open camera to take a photo from this spot.";
+        badge.className = "cam-gps-badge ok";
+      }
+    }
+
+    $("btnOpenCam").onclick = async () => {
+      if (!hostPos) return alert("Please capture your station location first using 📍 Use My Current Location.");
+      try {
+        camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+        const vid = $("camVideo");
+        vid.srcObject = camStream;
+        vid.style.display = "block";
+        $("camPlaceholder").style.display = "none";
+        $("camCanvas").style.display = "none";
+        $("btnOpenCam").classList.add("hide");
+        $("btnSnap").classList.remove("hide");
+        $("btnRetake").classList.add("hide");
+        locationPhotoBlob = null; locationPhotoGpsOk = false;
+        updateCamGpsBadge();
+      } catch (e) { alert("Camera error: " + e.message); }
+    };
+
+    $("btnSnap").onclick = () => {
+      // Get current GPS for the photo
+      navigator.geolocation.getCurrentPosition(gp => {
+        const vid = $("camVideo"), canvas = $("camCanvas");
+        canvas.width = vid.videoWidth; canvas.height = vid.videoHeight;
+        canvas.getContext("2d").drawImage(vid, 0, 0);
+        canvas.toBlob(blob => {
+          locationPhotoBlob = blob;
+          // Stop stream
+          if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+          vid.style.display = "none";
+          canvas.style.display = "block";
+          $("btnSnap").classList.add("hide");
+          $("btnOpenCam").classList.add("hide");
+          $("btnRetake").classList.remove("hide");
+
+          // GPS proximity check
+          const dist = haversineM(gp.coords.latitude, gp.coords.longitude, hostPos.latitude, hostPos.longitude);
+          locationPhotoGpsOk = dist <= 50;
+          updateCamGpsBadge();
+
+          // Thumbnail preview
+          const preview = $("locationPhotoPreview");
+          preview.classList.remove("hide");
+          preview.innerHTML = "";
+          const row = document.createElement("div");
+          row.className = "upload-preview";
+          const img = document.createElement("img");
+          img.src = URL.createObjectURL(blob);
+          const nm = document.createElement("span");
+          nm.className = "up-name";
+          nm.textContent = locationPhotoGpsOk
+            ? `📸 Photo captured · GPS ✅ ${dist.toFixed(0)} m from pin`
+            : `📸 Photo captured · ⚠ GPS ${dist.toFixed(0)} m from pin (must be ≤ 50 m)`;
+          nm.style.color = locationPhotoGpsOk ? "var(--g2)" : "var(--danger)";
+          row.append(img, nm);
+          preview.append(row);
+        }, "image/jpeg", 0.92);
+      }, () => {
+        // GPS unavailable during snap — still capture photo but mark GPS fail
+        const vid = $("camVideo"), canvas = $("camCanvas");
+        canvas.width = vid.videoWidth; canvas.height = vid.videoHeight;
+        canvas.getContext("2d").drawImage(vid, 0, 0);
+        canvas.toBlob(blob => {
+          locationPhotoBlob = blob;
+          locationPhotoGpsOk = false;
+          if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+          vid.style.display = "none";
+          canvas.style.display = "block";
+          $("btnSnap").classList.add("hide");
+          $("btnRetake").classList.remove("hide");
+          $("btnOpenCam").classList.add("hide");
+          updateCamGpsBadge();
+          const preview = $("locationPhotoPreview");
+          preview.classList.remove("hide");
+          preview.innerHTML = "";
+          const row = document.createElement("div");
+          row.className = "upload-preview";
+          const img = document.createElement("img"); img.src = URL.createObjectURL(blob);
+          const nm = document.createElement("span"); nm.className = "up-name";
+          nm.textContent = "📸 Photo captured · ⚠ GPS unavailable";
+          nm.style.color = "var(--danger)";
+          row.append(img, nm); preview.append(row);
+        }, "image/jpeg", 0.92);
+      }, { enableHighAccuracy: true, timeout: 8000 });
+    };
+
+    $("btnRetake").onclick = () => {
+      locationPhotoBlob = null; locationPhotoGpsOk = false;
+      $("locationPhotoPreview").classList.add("hide");
+      $("locationPhotoPreview").innerHTML = "";
+      $("camCanvas").style.display = "none";
+      $("camPlaceholder").style.display = "";
+      $("btnRetake").classList.add("hide");
+      $("btnOpenCam").classList.remove("hide");
       updateCamGpsBadge();
+    };
 
-      // Thumbnail preview
-      const preview = $("locationPhotoPreview");
-      preview.classList.remove("hide");
-      preview.innerHTML = "";
-      const row = document.createElement("div");
-      row.className = "upload-preview";
-      const img = document.createElement("img");
-      img.src = URL.createObjectURL(blob);
-      const nm = document.createElement("span");
-      nm.className = "up-name";
-      nm.textContent = locationPhotoGpsOk
-        ? `📸 Photo captured · GPS ✅ ${dist.toFixed(0)} m from pin`
-        : `📸 Photo captured · ⚠ GPS ${dist.toFixed(0)} m from pin (must be ≤ 50 m)`;
-      nm.style.color = locationPhotoGpsOk ? "var(--g2)" : "var(--danger)";
-      row.append(img, nm);
-      preview.append(row);
-    }, "image/jpeg", 0.92);
-  }, () => {
-    // GPS unavailable during snap — still capture photo but mark GPS fail
-    const vid = $("camVideo"), canvas = $("camCanvas");
-    canvas.width = vid.videoWidth; canvas.height = vid.videoHeight;
-    canvas.getContext("2d").drawImage(vid, 0, 0);
-    canvas.toBlob(blob => {
-      locationPhotoBlob = blob;
-      locationPhotoGpsOk = false;
-      if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
-      vid.style.display = "none";
-      canvas.style.display = "block";
-      $("btnSnap").classList.add("hide");
-      $("btnRetake").classList.remove("hide");
-      $("btnOpenCam").classList.add("hide");
-      updateCamGpsBadge();
-      const preview = $("locationPhotoPreview");
-      preview.classList.remove("hide");
-      preview.innerHTML = "";
-      const row = document.createElement("div");
-      row.className = "upload-preview";
-      const img = document.createElement("img"); img.src = URL.createObjectURL(blob);
-      const nm = document.createElement("span"); nm.className = "up-name";
-      nm.textContent = "📸 Photo captured · ⚠ GPS unavailable";
-      nm.style.color = "var(--danger)";
-      row.append(img, nm); preview.append(row);
-    }, "image/jpeg", 0.92);
-  }, { enableHighAccuracy: true, timeout: 8000 });
-};
+    $("saveH").onclick = async () => {
+      const kw = +$("hkw").value, cn = ticked("hn"), name = $("hname").value.trim();
+      if (!name || !$("haddr").value.trim() || !(kw > 0) || !cn.length || !hostPos) return alert("Fill every field and capture your location");
+      if (!$("hsafe").checked) return alert("Please confirm the safety declaration");
 
-$("btnRetake").onclick = () => {
-  locationPhotoBlob = null; locationPhotoGpsOk = false;
-  $("locationPhotoPreview").classList.add("hide");
-  $("locationPhotoPreview").innerHTML = "";
-  $("camCanvas").style.display = "none";
-  $("camPlaceholder").style.display = "";
-  $("btnRetake").classList.add("hide");
-  $("btnOpenCam").classList.remove("hide");
-  updateCamGpsBadge();
-};
+      // Validate ownership docs
+      if (!ownerType) return alert("Please select your owner type (Home Owner / Tenant / Shop).");
+      if (!ownershipFiles.length) return alert("Please upload at least one ownership/permission document.");
 
-$("saveH").onclick = async () => {
-  const kw = +$("hkw").value, cn = ticked("hn"), name = $("hname").value.trim();
-  if (!name || !$("haddr").value.trim() || !(kw > 0) || !cn.length || !hostPos) return alert("Fill every field and capture your location");
-  if (!$("hsafe").checked) return alert("Please confirm the safety declaration");
+      // Validate location photo
+      if (!locationPhotoBlob) return alert("Please take a location photo using the in-app camera.");
+      if (!locationPhotoGpsOk) return alert("Location photo GPS is too far from your pinned location (must be within 50 m). Please move to the station location and retake the photo.");
 
-  // Validate ownership docs
-  if (!ownerType) return alert("Please select your owner type (Home Owner / Tenant / Shop).");
-  if (!ownershipFiles.length) return alert("Please upload at least one ownership/permission document.");
+      $("saveH").disabled = true;
+      $("saveH").textContent = "⏳ Submitting...";
 
-  // Validate location photo
-  if (!locationPhotoBlob) return alert("Please take a location photo using the in-app camera.");
-  if (!locationPhotoGpsOk) return alert("Location photo GPS is too far from your pinned location (must be within 50 m). Please move to the station location and retake the photo.");
+      try {
+        const ref = await addDoc(collection(db, "hosts"), {
+          ownerUid: auth.currentUser.uid,
+          name,
+          lat: +hostPos.latitude.toFixed(3),
+          lng: +hostPos.longitude.toFixed(3),
+          kw, pricePerKwh: +$("hprice").value || 0,
+          connectors: cn,
+          amenities: $("hamen").value.split(",").map(s => s.trim()).filter(Boolean).slice(0, 8),
+          ownerType,
+          available: true, status: "pending", trust_rating: 3,
+          createdAt: serverTimestamp()
+        });
+        await setDoc(doc(db, "hosts", ref.id, "private", "address"), { address: $("haddr").value.trim() });
+        alert("✅ Submitted! Our team will verify your listing before it goes live.");
 
-  $("saveH").disabled = true;
-  $("saveH").textContent = "⏳ Submitting...";
+        // Reset form
+        $("hname").value = ""; $("haddr").value = ""; $("hkw").value = "";
+        $("hprice").value = ""; $("hamen").value = "";
+        document.querySelectorAll(".hn").forEach(x => x.checked = false);
+        $("hsafe").checked = false; hostPos = null;
+        $("hlocv").textContent = "";
+        // Reset verification state
+        ownerType = null; ownershipFiles = [];
+        locationPhotoBlob = null; locationPhotoGpsOk = false;
+        ['home', 'tenant', 'shop'].forEach(t => {
+          $("ot_" + t).classList.remove("selected");
+          $("docGuide_" + t).classList.add("hide");
+        });
+        $("ownershipUploadArea").classList.add("hide");
+        $("ownershipPreviews").replaceChildren();
+        $("locationPhotoPreview").classList.add("hide");
+        $("locationPhotoPreview").innerHTML = "";
+        $("camCanvas").style.display = "none";
+        $("camPlaceholder").style.display = "";
+        $("btnOpenCam").classList.remove("hide");
+        $("btnSnap").classList.add("hide");
+        $("btnRetake").classList.add("hide");
+        updateCamGpsBadge();
+      } catch (e) {
+        alert("Error: " + e.message);
+      }
 
-  try {
-    const ref = await addDoc(collection(db, "hosts"), {
-      ownerUid: auth.currentUser.uid,
-      name,
-      lat: +hostPos.latitude.toFixed(3),
-      lng: +hostPos.longitude.toFixed(3),
-      kw, pricePerKwh: +$("hprice").value || 0,
-      connectors: cn,
-      amenities: $("hamen").value.split(",").map(s => s.trim()).filter(Boolean).slice(0, 8),
-      ownerType,
-      available: true, status: "pending", trust_rating: 3,
-      createdAt: serverTimestamp()
-    });
-    await setDoc(doc(db, "hosts", ref.id, "private", "address"), { address: $("haddr").value.trim() });
-    alert("✅ Submitted! Our team will verify your listing before it goes live.");
+      $("saveH").disabled = false;
+      $("saveH").textContent = "🚀 Submit for Verification";
+    };
 
-    // Reset form
-    $("hname").value = ""; $("haddr").value = ""; $("hkw").value = "";
-    $("hprice").value = ""; $("hamen").value = "";
-    document.querySelectorAll(".hn").forEach(x => x.checked = false);
-    $("hsafe").checked = false; hostPos = null;
-    $("hlocv").textContent = "";
-    // Reset verification state
-    ownerType = null; ownershipFiles = [];
-    locationPhotoBlob = null; locationPhotoGpsOk = false;
-    ['home','tenant','shop'].forEach(t => {
-      $("ot_" + t).classList.remove("selected");
-      $("docGuide_" + t).classList.add("hide");
-    });
-    $("ownershipUploadArea").classList.add("hide");
-    $("ownershipPreviews").replaceChildren();
-    $("locationPhotoPreview").classList.add("hide");
-    $("locationPhotoPreview").innerHTML = "";
-    $("camCanvas").style.display = "none";
-    $("camPlaceholder").style.display = "";
-    $("btnOpenCam").classList.remove("hide");
-    $("btnSnap").classList.add("hide");
-    $("btnRetake").classList.add("hide");
-    updateCamGpsBadge();
-  } catch (e) {
-    alert("Error: " + e.message);
-  }
+    // ═══════════════ MY STATIONS (HOST) ═══════════════
+    async function loadHostStations() {
+      const list = $("hostList");
+      list.replaceChildren();
 
-  $("saveH").disabled = false;
-  $("saveH").textContent = "🚀 Submit for Verification";
-};
+      const loading = el("div", null, "card");
+      loading.innerHTML = '<p style="color:var(--t2);text-align:center;">Loading your stations...</p>';
+      list.append(loading);
 
-// ═══════════════ MY STATIONS (HOST) ═══════════════
-async function loadHostStations() {
-  const list = $("hostList");
-  list.replaceChildren();
+      try {
+        const q2 = query(collection(db, "hosts"), where("ownerUid", "==", auth.currentUser.uid));
+        const snap = await getDocs(q2);
+        list.replaceChildren();
 
-  const loading = el("div", null, "card");
-  loading.innerHTML = '<p style="color:var(--t2);text-align:center;">Loading your stations...</p>';
-  list.append(loading);
+        if (snap.empty) {
+          const empty = el("div", null, "card");
+          empty.innerHTML = '<p style="color:var(--t2);text-align:center;">You haven\'t registered any charging stations yet.<br>Go to <b>Register Station</b> to add your first one!</p>';
+          list.append(empty);
+          return;
+        }
 
-  try {
-    const q2 = query(collection(db, "hosts"), where("ownerUid", "==", auth.currentUser.uid));
-    const snap = await getDocs(q2);
-    list.replaceChildren();
+        snap.forEach(d => {
+          const h = d.data();
+          const c = el("div", null, "card");
 
-    if (snap.empty) {
-      const empty = el("div", null, "card");
-      empty.innerHTML = '<p style="color:var(--t2);text-align:center;">You haven\'t registered any charging stations yet.<br>Go to <b>Register Station</b> to add your first one!</p>';
-      list.append(empty);
-      return;
-    }
+          const statusClass = h.status === "verified" ? "chip-verified" : h.status === "pending" ? "chip-pending" : "chip-suspended";
+          const statusText = h.status.charAt(0).toUpperCase() + h.status.slice(1);
 
-    snap.forEach(d => {
-      const h = d.data();
-      const c = el("div", null, "card");
-
-      const statusClass = h.status === "verified" ? "chip-verified" : h.status === "pending" ? "chip-pending" : "chip-suspended";
-      const statusText = h.status.charAt(0).toUpperCase() + h.status.slice(1);
-
-      const inner = document.createElement("div");
-      inner.className = "station-card";
-      inner.innerHTML = `
+          const inner = document.createElement("div");
+          inner.className = "station-card";
+          inner.innerHTML = `
         <div class="info">
           <h4>${h.name} <span class="chip ${statusClass}">${statusText}</span></h4>
           <div class="meta">
@@ -1218,39 +1775,40 @@ async function loadHostStations() {
         <div class="actions"></div>
       `;
 
-      const actions = inner.querySelector(".actions");
+          const actions = inner.querySelector(".actions");
 
-      // Toggle availability
-      const toggleBtn = el("button",
-        h.available ? "🟢 Available" : "🔴 Unavailable",
-        `btn btn-sm ${h.available ? "btn-secondary" : "btn-danger"}`
-      );
-      toggleBtn.onclick = async () => {
-        const { updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
-        await updateDoc(doc(db, "hosts", d.id), { available: !h.available });
-        loadHostStations();
-      };
-      actions.append(toggleBtn);
+          // Toggle availability
+          const toggleBtn = el("button",
+            h.available ? "🟢 Available" : "🔴 Unavailable",
+            `btn btn-sm ${h.available ? "btn-secondary" : "btn-danger"}`
+          );
+          toggleBtn.onclick = async () => {
+            const { updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+            await updateDoc(doc(db, "hosts", d.id), { available: !h.available });
+            loadHostStations();
+          };
+          actions.append(toggleBtn);
 
-      // Delete station
-      const delBtn = el("button", "🗑 Remove", "btn btn-danger btn-sm");
-      delBtn.onclick = async () => {
-        if (!confirm("Remove this station permanently?")) return;
-        await deleteDoc(doc(db, "hosts", d.id));
-        loadHostStations();
-      };
-      actions.append(delBtn);
+          // Delete station
+          const delBtn = el("button", "🗑 Remove", "btn btn-danger btn-sm");
+          delBtn.onclick = async () => {
+            if (!confirm("Remove this station permanently?")) return;
+            await deleteDoc(doc(db, "hosts", d.id));
+            loadHostStations();
+          };
+          actions.append(delBtn);
 
-      c.append(inner);
-      list.append(c);
-    });
-  } catch (e) {
-    list.replaceChildren();
-    const errCard = el("div", null, "card");
-    errCard.innerHTML = `<p style="color:var(--danger);text-align:center;">Error loading stations: ${e.message}</p>`;
-    list.append(errCard);
-  }
-}
-</script>
+          c.append(inner);
+          list.append(c);
+        });
+      } catch (e) {
+        list.replaceChildren();
+        const errCard = el("div", null, "card");
+        errCard.innerHTML = `<p style="color:var(--danger);text-align:center;">Error loading stations: ${e.message}</p>`;
+        list.append(errCard);
+      }
+    }
+  </script>
 </body>
+
 </html>
